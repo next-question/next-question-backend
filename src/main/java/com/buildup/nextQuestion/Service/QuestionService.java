@@ -24,7 +24,7 @@ public class QuestionService {
 
     //문제 제공(json형식 반환)
     public List<Question> findAllQuestionByWorkBook(Long workbook_id){
-        return questionRepository.findAllQuestionByWorkBook(workbook_id);
+        return questionRepository.findAllByWorkBookId(workbook_id);
     }
 
     //문제 정보 갱신(받아온거 sql update)

@@ -12,6 +12,6 @@ import java.util.List;
 @Repository
 public interface QuestionRepository extends JpaRepository<Question, Long> {
 
-    public List<Question> findAllQuestionByWorkBook(Long workBookId);
+    public List<Question> findAllByWorkBookId(Long workBookId);
 
 }

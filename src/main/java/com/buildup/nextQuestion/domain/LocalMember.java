@@ -4,22 +4,26 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
-
 @Entity
 @Getter @Setter
-@Table(name = "work_book")
-public class WorkBook {
+@Table(name = "local_member")
+public class LocalMember {
 
     @Id @GeneratedValue
-    @Column(name = "work_book_id")
+    @Column(name = "local_member_id")
     private Long id;
 
-    private Timestamp recentSolveDate; // 문제집 최근 학습일
+    @Column(columnDefinition = "VARCHAR(15)")
+    private String user_id;
+
+    @Column(columnDefinition = "VARCHAR(20)")
+    private String pwd;
+
+    @Column(columnDefinition = "VARCHAR(40)")
+    private String email;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "member_id")
     private Member member;
+
 }
