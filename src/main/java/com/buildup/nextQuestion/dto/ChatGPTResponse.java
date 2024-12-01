@@ -12,7 +12,6 @@ import java.util.List;
 public class ChatGPTResponse {
     private List<Choice> choices;
 
-
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
