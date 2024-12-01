@@ -1,42 +1,64 @@
 package com.buildup.nextQuestion.Service;
 
+import com.buildup.nextQuestion.dto.ChatGPTRequest;
+import com.buildup.nextQuestion.dto.ChatGPTResponse;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 @Service
 public class GPTService {
 
+
+    @Value("${openai.prompt}")
+    private String prompt;
+
+    @Value("${openai.model}")
+    private String model;
+
+    @Value("${openai.api.url}")
+    private String apiURL;
+
+    @Autowired
+    private RestTemplate template;
+
+
     public String requestGPT(String sourceText, int numOfQuestions){
-        String respone = "{\n" +
-                "  \"questions\": [\n" +
-                "    {\n" +
-                "      \"id\": 1,\n" +
-                "      \"type\": \"MULTIPLE_CHOICE\",\n" +
-                "      \"question\": \"What is the capital of France?\",\n" +
-                "      \"options\": {\n" +
-                "        \"1\": \"Berlin\",\n" +
-                "        \"2\": \"Madrid\",\n" +
-                "        \"3\": \"Paris\",\n" +
-                "        \"4\": \"Rome\",\n" +
-                "        \"5\": \"London\"\n" +
-                "      },\n" +
-                "      \"answer\": \"3\"\n" +
-                "    },\n" +
-                "    {\n" +
-                "      \"id\": 2,\n" +
-                "      \"type\": \"SHORT_ANSWER\",\n" +
-                "      \"question\": \"Which planet is known as the Red Planet?\",\n" +
-                "      \"options\": {\n" +
-                "        \"1\": \"Mars\",\n" +
-                "        \"2\": \"Jupiter\",\n" +
-                "        \"3\": \"Saturn\",\n" +
-                "        \"4\": \"Earth\",\n" +
-                "        \"5\": \"Venus\"\n" +
-                "      },\n" +
-                "      \"answer\": \"1\"\n" +
-                "    }\n" +
-                "  ]\n" +
-                "}";
-        return respone;
+        prompt += "\n" + sourceText;
+        ChatGPTRequest request = new ChatGPTRequest(model, prompt);
+        ChatGPTResponse chatGPTResponse =  template.postForObject(apiURL, request, ChatGPTResponse.class);
+
+        return chatGPTResponse.getChoices().get(0).getMessage().getContent();
+
     }
+
+    public JsonNode stringToJson(String response) throws JsonProcessingException {
+        String codeBlockStart = "```json";
+        String codeBlockEnd = "```";
+
+        int startIndex = response.indexOf(codeBlockStart);
+        int endIndex = response.indexOf(codeBlockEnd, startIndex + codeBlockStart.length());
+
+        if (startIndex == -1 || endIndex == -1) {
+            throw new IllegalStateException("Invalid input: JSON code block not found.");
+        }
+
+        // JSON 문자열 추출
+        String jsonString = response.substring(startIndex + codeBlockStart.length(), endIndex).trim();
+        System.out.println(jsonString);
+        // JSON 문자열을 JsonNode로 변환
+        ObjectMapper mapper = new ObjectMapper();
+
+        return mapper.readTree(jsonString);
+    }
+
+
+
+
 
 }
