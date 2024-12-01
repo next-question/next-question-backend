@@ -13,7 +13,7 @@ public class MultipleChoice {
     @Column(name = "multiple_choice_id")
     private Long id;
 
-    @Column(name = "`option`", columnDefinition = "TEXT")
+    @Column(name = "opt", columnDefinition = "TEXT")
     private String option;
 
     @OneToOne

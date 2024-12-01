@@ -29,7 +29,7 @@ public class Question {
     @Column(columnDefinition = "TINYINT(1)")
     private Boolean wrong; // 오답 여부
 
-    @Column(name = "`delete`", columnDefinition = "TINYINT(1)")
+    @Column(name = "del", columnDefinition = "TINYINT(1)")
     private Boolean delete; // 삭제 여부
 
 //    @OneToOne
