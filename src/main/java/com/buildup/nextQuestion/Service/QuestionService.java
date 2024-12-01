@@ -1,13 +1,11 @@
 package com.buildup.nextQuestion.Service;
 
 import com.buildup.nextQuestion.dto.QuestionUpdateRequest;
-import org.springframework.data.jpa.repository.JpaRepository;
 import com.buildup.nextQuestion.Repository.QuestionRepository;
 import com.buildup.nextQuestion.domain.Question;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.sql.Timestamp;
 import java.util.List;
 
 @Service
