@@ -1,76 +1,66 @@
 package com.buildup.nextQuestion.Service;
 
+import com.buildup.nextQuestion.dto.ChatGPTRequest;
+import com.buildup.nextQuestion.dto.ChatGPTResponse;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 @Service
 public class GPTService {
 
+
+    @Value("${openai.prompt}")
+    private String prompt;
+
+    @Value("${openai.model}")
+    private String model;
+
+    @Value("${openai.api.url}")
+    private String apiURL;
+
+    @Autowired
+    private RestTemplate template;
+
+
     public String requestGPT(String sourceText, int numOfQuestions){
-        String respone = "{\n" +
-                "    \"questions\": [\n" +
-                "        {\n" +
-                "            \"name\": \"컴퓨터의 기억장치 계층구조의 특징은 무엇인가?\",\n" +
-                "            \"type\": \"MULTIPLE_CHOICE\",\n" +
-                "            \"answer\": \"2\",\n" +
-                "            \"opt\": \"1. 모든 계층에서 동일한 용량을 가진다. 2. 접근 속도가 빠를수록 용량이 작고 비싸다. 3. 모든 데이터를 주기억장치에서 저장한다. 4. 하위 계층일수록 데이터 전송률이 높다.\"\n" +
-                "        },\n" +
-                "        {\n" +
-                "            \"name\": \"캐시 메모리의 주된 기능은 무엇인가?\",\n" +
-                "            \"type\": \"MULTIPLE_CHOICE\",\n" +
-                "            \"answer\": \"4\",\n" +
-                "            \"opt\": \"1. 데이터 처리를 담당한다. 2. 네트워크 속도를 높인다. 3. 전원을 공급한다. 4. 주기억장치와 중앙처리장치 사이에서 데이터 접근 속도를 높인다.\"\n" +
-                "        },\n" +
-                "        {\n" +
-                "            \"name\": \"주기억장치와 캐시 메모리 사이의 관계를 설명하는 기법은 무엇인가?\",\n" +
-                "            \"type\": \"MULTIPLE_CHOICE\",\n" +
-                "            \"answer\": \"3\",\n" +
-                "            \"opt\": \"1. FIFO 방식 2. LIFO 방식 3. 적중률을 통한 데이터 접근 최적화 4. 데이터 압축기법\"\n" +
-                "        },\n" +
-                "        {\n" +
-                "            \"name\": \"연관 사상 캐시를 사용할 때의 장점은 무엇인가?\",\n" +
-                "            \"type\": \"MULTIPLE_CHOICE\",\n" +
-                "            \"answer\": \"1\",\n" +
-                "            \"opt\": \"1. 블록 교체에 있어 융통성이 높다. 2. 구현 비용이 매우 낮다. 3. 모든 접근에 동일한 시간이 소요된다. 4. 값이 항상 캐시에 저장된다.\"\n" +
-                "        },\n" +
-                "        {\n" +
-                "            \"name\": \"캐시 기억장치는 주기억장치의 데이터를 어떻게 처리하는가?\",\n" +
-                "            \"type\": \"MULTIPLE_CHOICE\",\n" +
-                "            \"answer\": \"2\",\n" +
-                "            \"opt\": \"1. 주기억장치의 모든 데이터를 복사한다. 2. 주기억장치에서 자주 사용되는 일부 데이터를 임시로 저장한다. 3. 주기억장치의 데이터를 압축하여 저장한다. 4. 주기억장치의 데이터를 암호화하여 저장한다.\"\n" +
-                "        },\n" +
-                "        {\n" +
-                "            \"name\": \"세트-연관 사상 방식의 특성은?\",\n" +
-                "            \"type\": \"MULTIPLE_CHOICE\",\n" +
-                "            \"answer\": \"3\",\n" +
-                "            \"opt\": \"1. 특정 라인의 데이터를 교체할 수 없다. 2. 모든 데이터를 연관 방식으로 저장한다. 3. 캐시를 여러 세트로 나누어 각 세트에 여러 라인을 갖는다. 4. 항상 주기억장치에 직접 접근한다.\"\n" +
-                "        },\n" +
-                "        {\n" +
-                "            \"name\": \"캐시 메모리의 교체 알고리즘 중 가장 널리 사용되는 것은 무엇인가?\",\n" +
-                "            \"type\": \"MULTIPLE_CHOICE\",\n" +
-                "            \"answer\": \"2\",\n" +
-                "            \"opt\": \"1. 선입선출 2. 최소 최근 사용 3. 무작위 4. 최대 사용 빈도\"\n" +
-                "        },\n" +
-                "        {\n" +
-                "            \"name\": \"후기록(write back) 방식의 특징은?\",\n" +
-                "            \"type\": \"MULTIPLE_CHOICE\",\n" +
-                "            \"answer\": \"4\",\n" +
-                "            \"opt\": \"1. 캐시 데이터를 즉시 주기억장치에 기록한다. 2. 캐시를 채우지 않는다. 3. 주기억장치와 캐시 사이의 데이터 전송률을 낮춘다. 4. 데이터를 캐시에 가만히 두고 블록이 교체될 때에만 주기억장치에 기록한다.\"\n" +
-                "        },\n" +
-                "        {\n" +
-                "            \"name\": \"다단계 캐시의 장점은 무엇인가?\",\n" +
-                "            \"type\": \"MULTIPLE_CHOICE\",\n" +
-                "            \"answer\": \"4\",\n" +
-                "            \"opt\": \"1. 캐시의 크기를 무한대로 늘릴 수 있다. 2. 데이터 일관성을 보장하지 않는다. 3. 메모리 타이밍이 일관되지 않다. 4. 전체 시스템 성능을 높이고 프로세서 외부 활동을 줄인다.\"\n" +
-                "        },\n" +
-                "        {\n" +
-                "            \"name\": \"리틀 엔디언과 빅 엔디언의 주된 차이는 무엇인가?\",\n" +
-                "            \"type\": \"MULTIPLE_CHOICE\",\n" +
-                "            \"answer\": \"1\",\n" +
-                "            \"opt\": \"1. 데이터 저장 방법 2. CPU 속도 3. 메모리 크기 4. 전송률\"\n" +
-                "        }\n" +
-                "    ]\n" +
-                "}";
-        return respone;
+
+        prompt += "\n" + sourceText;
+        ChatGPTRequest request = new ChatGPTRequest(model, prompt);
+        ChatGPTResponse chatGPTResponse =  template.postForObject(apiURL, request, ChatGPTResponse.class);
+
+        return chatGPTResponse.getChoices().get(0).getMessage().getContent();
+
     }
+
+    public JsonNode stringToJson(String response) throws JsonProcessingException {
+        String codeBlockStart = "```json";
+        String codeBlockEnd = "```";
+
+        int startIndex = response.indexOf(codeBlockStart);
+        int endIndex = response.indexOf(codeBlockEnd, startIndex + codeBlockStart.length());
+
+        if (startIndex == -1 || endIndex == -1) {
+            throw new IllegalStateException("Invalid input: JSON code block not found.");
+        }
+
+        // JSON 문자열 추출
+        String jsonString = response.substring(startIndex + codeBlockStart.length(), endIndex).trim();
+        System.out.println(jsonString);
+        // JSON 문자열을 JsonNode로 변환
+        ObjectMapper mapper = new ObjectMapper();
+
+        return mapper.readTree(jsonString);
+
+    }
+
+
+
+
 
 }

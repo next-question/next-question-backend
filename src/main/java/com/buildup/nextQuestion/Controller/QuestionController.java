@@ -22,28 +22,26 @@ public class QuestionController {
             @RequestParam("numOfQuestions") int numOfQuestions
     ) {
         try {
-            String jsonString = questionGenerationFacade.generateQuestionGuest(file, numOfQuestions);
-            System.out.println(jsonString);
-            ObjectMapper objectMapper = new ObjectMapper();
-            JsonNode jsonNode = objectMapper.readTree(jsonString);
+
+            JsonNode jsonNode = questionGenerationFacade.generateQuestionGuest(file, numOfQuestions);
             return ResponseEntity.ok(jsonNode);
 
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(null);
+            return ResponseEntity.status(500).body("Error parsing JSON: " + e.getMessage());
         }
     }
 
-    @PostMapping("api/question/genmember")
-    public ResponseEntity<?> uploadFileMember(
-            @RequestParam("file") MultipartFile file,
-            @RequestParam("numOfQuestions") int numOfQuestions
-    ) {
-        try {
-            questionGenerationFacade.generateQuestionMember(file, numOfQuestions);
-            return ResponseEntity.ok(null);
-
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(null);
-        }
-    }
+//    @PostMapping("api/question/genmember")
+//    public ResponseEntity<?> uploadFileMember(
+//            @RequestParam("file") MultipartFile file,
+//            @RequestParam("numOfQuestions") int numOfQuestions
+//    ) {
+//        try {
+//            questionGenerationFacade.generateQuestionMember(file, numOfQuestions);
+//            return ResponseEntity.ok(null);
+//
+//        } catch (Exception e) {
+//            return ResponseEntity.status(500).body(null);
+//        }
+//    }
 }
