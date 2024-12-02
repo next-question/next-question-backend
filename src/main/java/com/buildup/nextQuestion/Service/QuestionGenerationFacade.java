@@ -19,7 +19,6 @@ public class QuestionGenerationFacade {
         String sourceText = fileService.extractTextFromPDF(sourceFile);
         String respone = gptService.requestGPT(sourceText, numOfQuestions);
         System.out.println(respone);
-
         return gptService.stringToJson(respone);
     }
 

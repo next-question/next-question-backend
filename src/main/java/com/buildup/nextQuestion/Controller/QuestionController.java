@@ -22,6 +22,7 @@ public class QuestionController {
             @RequestParam("numOfQuestions") int numOfQuestions
     ) {
         try {
+
             JsonNode jsonNode = questionGenerationFacade.generateQuestionGuest(file, numOfQuestions);
             return ResponseEntity.ok(jsonNode);
 

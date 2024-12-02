@@ -29,6 +29,7 @@ public class GPTService {
 
 
     public String requestGPT(String sourceText, int numOfQuestions){
+
         prompt += "\n" + sourceText;
         ChatGPTRequest request = new ChatGPTRequest(model, prompt);
         ChatGPTResponse chatGPTResponse =  template.postForObject(apiURL, request, ChatGPTResponse.class);
@@ -55,6 +56,7 @@ public class GPTService {
         ObjectMapper mapper = new ObjectMapper();
 
         return mapper.readTree(jsonString);
+
     }
 
 

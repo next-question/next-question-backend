@@ -1,12 +1,19 @@
 package com.buildup.nextQuestion.Service;
 
+import com.buildup.nextQuestion.domain.enums.QuestionType;
 import com.buildup.nextQuestion.dto.QuestionUpdateRequest;
 import com.buildup.nextQuestion.Repository.QuestionRepository;
 import com.buildup.nextQuestion.domain.Question;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cglib.core.Local;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -17,7 +24,32 @@ public class QuestionService {
     private QuestionRepository questionRepository;
 
     //생성된 문제 리스트 저장
-    public void saveAll(List<Question> questions) {questionRepository.saveAll(questions);}
+    public void saveAll(String jsonString) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode jsonNode = objectMapper.readTree(jsonString);
+        JsonNode questionsNode = jsonNode.get("questions");
+
+        List<Question> questions = new ArrayList<>();
+
+        for (JsonNode questionNode : questionsNode) {
+            Question question = new Question();
+            question.setName(questionNode.get("name").asText());
+            String typeFrom = questionNode.get("type").asText();
+            QuestionType type = QuestionType.valueOf(typeFrom);
+            question.setType(type);
+            question.setAnswer(questionNode.get("answer").asText());
+            Timestamp currentTimestamp = Timestamp.from(Instant.now());
+            question.setCreateTime(currentTimestamp);
+
+            if (questionNode.get("type").asText().equals("MULTIPLE_CHOICE")) {
+                question.setOption(questionNode.get("opt").asText());
+            }
+
+            questions.add(question);
+        }
+
+        questionRepository.saveAll(questions);
+    }
 
 
 
