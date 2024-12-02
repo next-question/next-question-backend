@@ -15,17 +15,17 @@ public class QuestionGenerationFacade {
     private final GPTService gptService;
     private final QuestionService questionService;
 
-    public JsonNode generateQuestionGuest(MultipartFile sourceFile, int numOfQuestions) throws IOException {
-        String sourceText = fileService.extractTextFromPDF(sourceFile);
-        String respone = gptService.requestGPT(sourceText, numOfQuestions);
-        System.out.println(respone);
-        return gptService.stringToJson(respone);
+    public JsonNode generateQuestionByGuest(MultipartFile file, int numOfQuestions) throws IOException {
+        String content = fileService.extractTextFromPDF(file);
+        String response = gptService.requestGPT(content, numOfQuestions);
+        System.out.println(response);
+        return gptService.stringToJson(response);
     }
 
-//    public void generateQuestionMember(MultipartFile sorceFile, int numOfQuestions)throws IOException {
-//        String sourceText = fileService.extractTextFromPDF(sorceFile);
-//        String respone = gptService.requestGPT(sourceText, numOfQuestions);
-//        questionService.saveAll(respone);
+//    public void generateQuestionMember(MultipartFile file, int numOfQuestions)throws IOException {
+//        String content = fileService.extractTextFromPDF(file);
+//        String response = gptService.requestGPT(response, numOfQuestions);
+//        questionService.saveAll(response);
 //    }
 
 }

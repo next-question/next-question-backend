@@ -16,8 +16,8 @@ public class QuestionController {
 
     private final QuestionGenerationFacade questionGenerationFacade;
 
-    @PostMapping("api/question/genguest")
-    public ResponseEntity<?> uploadFileGuest(
+    @PostMapping("api/file/upload/guest")
+    public ResponseEntity<?> uploadFileByGuest(
             @RequestParam("file") MultipartFile file,
             @RequestParam("numOfQuestions") int numOfQuestions
     ) {
@@ -31,8 +31,8 @@ public class QuestionController {
         }
     }
 
-//    @PostMapping("api/question/genmember")
-//    public ResponseEntity<?> uploadFileMember(
+//    @PostMapping("api/file/upload/member")
+//    public ResponseEntity<?> uploadFileByMember(
 //            @RequestParam("file") MultipartFile file,
 //            @RequestParam("numOfQuestions") int numOfQuestions
 //    ) {

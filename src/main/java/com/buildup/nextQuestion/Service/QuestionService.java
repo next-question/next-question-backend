@@ -55,11 +55,11 @@ public class QuestionService {
 
     //문제 제공(json형식 반환)
     public List<Question> findAllQuestionByWorkBook(Long workbook_id){
-        return questionRepository.findAllByWorkBookId(workbook_id);
+        return questionRepository.findAllByWorkBook(workbook_id);
     }
 
     //문제 정보 갱신(update)
-    public void updateQuestions (List<QuestionUpdateRequest> updatedQuestions) {
+    public void updateQuestion (List<QuestionUpdateRequest> updatedQuestions) {
         for(QuestionUpdateRequest request : updatedQuestions) {
             Long questionId = request.getQuestionId();
            Question existingQuestion = questionRepository.findById(questionId).get(); //id로 Question객체 가져옴
