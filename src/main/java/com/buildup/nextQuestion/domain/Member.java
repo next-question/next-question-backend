@@ -20,4 +20,6 @@ public class Member {
     @Enumerated(EnumType.STRING)
     private LoginType logintype;
 
+
+
 }

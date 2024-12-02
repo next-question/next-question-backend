@@ -23,6 +23,7 @@ public class QuestionController {
     ) {
         try {
             String jsonString = questionGenerationFacade.generateQuestionGuest(file, numOfQuestions);
+            System.out.println(jsonString);
             ObjectMapper objectMapper = new ObjectMapper();
             JsonNode jsonNode = objectMapper.readTree(jsonString);
             return ResponseEntity.ok(jsonNode);

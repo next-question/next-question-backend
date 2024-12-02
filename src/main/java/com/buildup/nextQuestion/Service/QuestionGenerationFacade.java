@@ -22,8 +22,8 @@ public class QuestionGenerationFacade {
 
     public void generateQuestionMember(MultipartFile sorceFile, int numOfQuestions)throws IOException {
         String sourceText = fileService.extractTextFromPDF(sorceFile);
-        String respone = gptService.requestGPT(sourceText, numOfQuestions);
-        questionService.saveParsedQuestions(respone);
+        String resposne = gptService.requestGPT(sourceText, numOfQuestions);
+        questionService.saveAll(resposne);
     }
 
 }
