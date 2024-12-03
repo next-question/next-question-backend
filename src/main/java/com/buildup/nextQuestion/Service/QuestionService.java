@@ -1,11 +1,14 @@
 package com.buildup.nextQuestion.Service;
 
+import com.buildup.nextQuestion.domain.WorkBook;
 import com.buildup.nextQuestion.domain.enums.QuestionType;
 import com.buildup.nextQuestion.dto.QuestionUpdateRequest;
 import com.buildup.nextQuestion.Repository.QuestionRepository;
 import com.buildup.nextQuestion.domain.Question;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.hibernate.jdbc.Work;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cglib.core.Local;
 import org.springframework.stereotype.Service;
@@ -24,38 +27,26 @@ public class QuestionService {
     private QuestionRepository questionRepository;
 
     //생성된 문제 리스트 저장
-    public void saveAll(String jsonString) throws IOException {
+    public void saveAll(JsonNode jsonNode) throws IOException {
+
         ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode jsonNode = objectMapper.readTree(jsonString);
+
         JsonNode questionsNode = jsonNode.get("questions");
-
-        List<Question> questions = new ArrayList<>();
-
-        for (JsonNode questionNode : questionsNode) {
-            Question question = new Question();
-            question.setName(questionNode.get("name").asText());
-            String typeFrom = questionNode.get("type").asText();
-            QuestionType type = QuestionType.valueOf(typeFrom);
-            question.setType(type);
-            question.setAnswer(questionNode.get("answer").asText());
-            Timestamp currentTimestamp = Timestamp.from(Instant.now());
-            question.setCreateTime(currentTimestamp);
-
-            if (questionNode.get("type").asText().equals("MULTIPLE_CHOICE")) {
-                question.setOption(questionNode.get("opt").asText());
-            }
-
-            questions.add(question);
+        if (questionsNode != null && questionsNode.isArray()) {
+            List<Question> questions = objectMapper.readValue(
+                    questionsNode.toString(),
+                    new TypeReference<List<Question>>() {
+                    }
+            );
+            questionRepository.saveAll(questions);
         }
-
-        questionRepository.saveAll(questions);
     }
 
 
 
     //문제 제공(json형식 반환)
-    public List<Question> findAllQuestionByWorkBook(Long workbook_id){
-        return questionRepository.findAllByWorkBook(workbook_id);
+    public List<Question> findAllQuestionByWorkBook(WorkBook workBook) {
+        return questionRepository.findAllByWorkBook(workBook);
     }
 
     //문제 정보 갱신(update)

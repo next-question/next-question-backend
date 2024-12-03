@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+
 @RestController
 @AllArgsConstructor
 public class QuestionController {
@@ -23,7 +25,7 @@ public class QuestionController {
     ) {
         try {
 
-            JsonNode jsonNode = questionGenerationFacade.generateQuestionGuest(file, numOfQuestions);
+            JsonNode jsonNode = questionGenerationFacade.createQuestionByGuest(file, numOfQuestions);
             return ResponseEntity.ok(jsonNode);
 
         } catch (Exception e) {
@@ -31,17 +33,19 @@ public class QuestionController {
         }
     }
 
-//    @PostMapping("api/file/upload/member")
-//    public ResponseEntity<?> uploadFileByMember(
-//            @RequestParam("file") MultipartFile file,
-//            @RequestParam("numOfQuestions") int numOfQuestions
-//    ) {
+    @PostMapping("api/file/upload/member")
+    public ResponseEntity<?> uploadFileByMember(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("numOfQuestions") int numOfQuestions
+    ) throws IOException {
 //        try {
-//            questionGenerationFacade.generateQuestionMember(file, numOfQuestions);
-//            return ResponseEntity.ok(null);
+            JsonNode jsonNode = questionGenerationFacade.createQuestionByMember(file, numOfQuestions);
+            return ResponseEntity.ok(jsonNode);
 //
 //        } catch (Exception e) {
 //            return ResponseEntity.status(500).body(null);
 //        }
-//    }
+    }
+
+
 }

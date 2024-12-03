@@ -1,6 +1,7 @@
 package com.buildup.nextQuestion.domain;
 
 import com.buildup.nextQuestion.domain.enums.QuestionType;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -22,8 +23,19 @@ public class Question {
     @Enumerated(EnumType.STRING)
     private QuestionType type; //문제 타입
 
-    @Column(name = "opt", columnDefinition = "TEXT")
-    private String option;
+    @Column(columnDefinition = "TEXT")
+    private String opt;
+
+    @JsonSetter("opt")
+    public void setOpt(String opt) {
+        // MULTIPLE_CHOICE일 때만 opt 저장
+        if (this.type == QuestionType.MULTIPLE_CHOICE) {
+            this.opt = opt;
+        } else {
+            this.opt = null;
+        }
+    }
+
 
     private String answer; // 정답
     private Timestamp createTime; // 생성 시간
@@ -42,4 +54,6 @@ public class Question {
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "member_id")
     private Member member; // 회원 ID
+
+
 }
