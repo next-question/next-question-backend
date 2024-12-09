@@ -51,7 +51,6 @@ public class GPTService {
 
         // JSON 문자열 추출
         String jsonString = response.substring(startIndex + codeBlockStart.length(), endIndex).trim();
-        System.out.println(jsonString);
         // JSON 문자열을 JsonNode로 변환
         ObjectMapper mapper = new ObjectMapper();
 

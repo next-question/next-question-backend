@@ -21,12 +21,11 @@ public class QuestionGenerationFacade {
         return gptService.stringToJson(response);
     }
 
-    public JsonNode createQuestionByMember(MultipartFile file, int numOfQuestions)throws IOException {
+    public void generateQuestionByMember(MultipartFile file, int numOfQuestions) throws IOException {
         String content = fileService.extractTextFromPDF(file);
         String response = gptService.requestGPT(content, numOfQuestions);
-        JsonNode jsonNode = gptService.stringToJson(response);
-        questionService.saveAll(jsonNode);
-        return jsonNode;
+        JsonNode questionNode = gptService.stringToJson(response);
+        questionService.saveAll(questionNode);
     }
-
 }
+

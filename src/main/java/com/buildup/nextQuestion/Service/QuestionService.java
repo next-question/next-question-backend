@@ -28,11 +28,11 @@ public class QuestionService {
 
     //생성된 문제 리스트 저장
     public void saveAll(JsonNode jsonNode) throws IOException {
-
         ObjectMapper objectMapper = new ObjectMapper();
 
         JsonNode questionsNode = jsonNode.get("questions");
         if (questionsNode != null && questionsNode.isArray()) {
+
             List<Question> questions = objectMapper.readValue(
                     questionsNode.toString(),
                     new TypeReference<List<Question>>() {
@@ -41,13 +41,7 @@ public class QuestionService {
             questionRepository.saveAll(questions);
         }
     }
-
-
-
-    //문제 제공(json형식 반환)
-    public List<Question> findAllQuestionByWorkBook(WorkBook workBook) {
-        return questionRepository.findAllByWorkBook(workBook);
-    }
+    
 
     //문제 정보 갱신(update)
     public void updateQuestion (List<QuestionUpdateRequest> updatedQuestions) {
