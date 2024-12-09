@@ -7,6 +7,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+
 @RestController
 @AllArgsConstructor
 public class QuestionController {
@@ -24,6 +26,7 @@ public class QuestionController {
             int numOfQuestions = rootNode.path("option").path("numOfQuestions").asInt();
 
             JsonNode jsonNode = questionGenerationFacade.generateQuestionByGuest(File, numOfQuestions);
+
             return ResponseEntity.ok(jsonNode);
 
         } catch (Exception e) {
@@ -47,4 +50,5 @@ public class QuestionController {
             return ResponseEntity.status(500).body(null);
         }
     }
+
 }

@@ -8,6 +8,7 @@ import com.buildup.nextQuestion.domain.Question;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.hibernate.jdbc.Work;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cglib.core.Local;
 import org.springframework.stereotype.Service;
@@ -27,12 +28,11 @@ public class QuestionService {
 
     //생성된 문제 리스트 저장
     public void saveAll(JsonNode jsonNode) throws IOException {
-
         ObjectMapper objectMapper = new ObjectMapper();
 
         JsonNode questionsNode = jsonNode.get("questions");
+        if (questionsNode != null && questionsNode.isArray()) {
 
-        if (questionsNode != null && questionsNode.isArray( )) {
             List<Question> questions = objectMapper.readValue(
                     questionsNode.toString(),
                     new TypeReference<List<Question>>() {
@@ -41,11 +41,7 @@ public class QuestionService {
             questionRepository.saveAll(questions);
         }
     }
-
-    //문제 제공(json형식 반환)
-    public List<Question> findAllQuestionByWorkBook(WorkBook workbook){
-        return questionRepository.findAllByWorkBook(workbook);
-    }
+    
 
     //문제 정보 갱신(update)
     public void updateQuestion (List<QuestionUpdateRequest> updatedQuestions) {
