@@ -15,7 +15,7 @@ public class QuestionGenerationFacade {
     private final GPTService gptService;
     private final QuestionService questionService;
 
-    public JsonNode createQuestionByGuest(MultipartFile file, int numOfQuestions) throws IOException {
+    public JsonNode generateQuestionByGuest(MultipartFile file, int numOfQuestions) throws IOException {
         String content = fileService.extractTextFromPDF(file);
         String response = gptService.requestGPT(content, numOfQuestions);
         return gptService.stringToJson(response);

@@ -3,6 +3,7 @@ package com.buildup.nextQuestion.domain;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.sql.Timestamp;
 
@@ -13,6 +14,7 @@ public class QuestionInfoByMember {
     @Id @GeneratedValue
     private Long id;
 
+    @UpdateTimestamp
     private Timestamp recentSolveTime; // 최근 학습 시간
 
     @Column(columnDefinition = "TINYINT(1)")
