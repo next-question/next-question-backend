@@ -38,13 +38,13 @@ public class QuestionController {
             @RequestParam("file") MultipartFile file,
             @RequestParam("numOfQuestions") int numOfQuestions
     ) throws IOException {
-//        try {
+        try {
             JsonNode jsonNode = questionGenerationFacade.createQuestionByMember(file, numOfQuestions);
             return ResponseEntity.ok(jsonNode);
-//
-//        } catch (Exception e) {
-//            return ResponseEntity.status(500).body(null);
-//        }
+
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(null);
+        }
     }
 
 
