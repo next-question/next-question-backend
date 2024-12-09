@@ -21,18 +21,19 @@ public class Question {
     private String name; // 문제 이름
 
     @Enumerated(EnumType.STRING)
+    @Column(columnDefinition = "VARCHAR(30)")
     private QuestionType type; //문제 타입
 
-    @Column(columnDefinition = "TEXT")
-    private String opt;
+    @Column(name = "opt", columnDefinition = "TEXT")
+    private String option;
 
     @JsonSetter("opt")
     public void setOpt(String opt) {
         // MULTIPLE_CHOICE일 때만 opt 저장
         if (this.type == QuestionType.MULTIPLE_CHOICE) {
-            this.opt = opt;
+            this.option = opt;
         } else {
-            this.opt = null;
+            this.option = null;
         }
     }
 
