@@ -1,5 +1,7 @@
 package com.buildup.nextQuestion.Service;
 
+import com.buildup.nextQuestion.Repository.QuestionInfoByMemberRepository;
+import com.buildup.nextQuestion.domain.QuestionInfoByMember;
 import com.buildup.nextQuestion.domain.WorkBook;
 import com.buildup.nextQuestion.domain.enums.QuestionType;
 import com.buildup.nextQuestion.dto.QuestionUpdateRequest;
@@ -25,6 +27,7 @@ public class QuestionService {
 
     @Autowired
     private QuestionRepository questionRepository;
+    private QuestionInfoByMemberRepository questionInfoByMemberRepository;
 
     //생성된 문제 리스트 저장
     public void saveAll(JsonNode jsonNode) throws IOException {
@@ -45,19 +48,19 @@ public class QuestionService {
 
 
     //문제 제공(json형식 반환)
-    public List<Question> findAllQuestionByWorkBook(WorkBook workBook) {
-        return questionRepository.findAllByWorkBook(workBook);
+    public List<Question> findAllQuestionByWorkBook(Long workbook_id){
+        return questionRepository.findAllByWorkBook(workbook_id);
     }
 
     //문제 정보 갱신(update)
     public void updateQuestion (List<QuestionUpdateRequest> updatedQuestions) {
         for(QuestionUpdateRequest request : updatedQuestions) {
             Long questionId = request.getQuestionId();
-           Question existingQuestion = questionRepository.findById(questionId).get(); //id로 Question객체 가져옴
+            QuestionInfoByMember existingQuestion = questionInfoByMemberRepository.findById(questionId).get(); //id로 Question객체 가져옴
             existingQuestion.setWrong(request.getWrong()); //객체 정답여부 update
             existingQuestion.setRecentSolveTime(request.getRecentSolveTime()); //객체 최근 시간 update
 
-            questionRepository.save(existingQuestion); //객체 저장
+            questionInfoByMemberRepository.save(existingQuestion); //객체 저장
         }
     }
 }
