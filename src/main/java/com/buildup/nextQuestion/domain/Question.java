@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonSetter;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.sql.Timestamp;
@@ -45,8 +44,6 @@ public class Question {
     @CreationTimestamp
     private Timestamp createTime; // 생성 시간
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(name = "work_book_id") //문제집에서 id를 fk로 가져옴
-    private WorkBook workBook;
+
 
 }

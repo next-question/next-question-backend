@@ -2,23 +2,16 @@ package com.buildup.nextQuestion.Service;
 
 import com.buildup.nextQuestion.Repository.QuestionInfoByMemberRepository;
 import com.buildup.nextQuestion.domain.QuestionInfoByMember;
-import com.buildup.nextQuestion.domain.WorkBook;
-import com.buildup.nextQuestion.domain.enums.QuestionType;
 import com.buildup.nextQuestion.dto.QuestionUpdateRequest;
 import com.buildup.nextQuestion.Repository.QuestionRepository;
 import com.buildup.nextQuestion.domain.Question;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.hibernate.jdbc.Work;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cglib.core.Local;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -45,10 +38,7 @@ public class QuestionService {
         }
     }
 
-    //문제 제공(json형식 반환)
-    public List<Question> findAllQuestionByWorkBook(Long workbook_id){
-        return questionRepository.findAllByWorkBook(workbook_id);
-    }
+
 
 
     //문제 정보 갱신(update)
