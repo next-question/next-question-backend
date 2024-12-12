@@ -11,7 +11,6 @@ import java.util.List;
 @Repository
 public interface QuestionRepository extends JpaRepository<Question, Long> {
 
-    @Query("SELECT q FROM Question q WHERE q.workBook.id = :workbookId")
-    List<Question> findAllByWorkBook(@Param("workbookId") Long workBook);
+
 
 }
