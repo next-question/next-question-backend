@@ -18,36 +18,61 @@ public class QuestionController {
 
     @PostMapping("api/file/upload/guest")
     public ResponseEntity<?> uploadFileByGuest(
-            @RequestPart("file") MultipartFile File,
-            @RequestPart("jsonFile") MultipartFile jsonFile
+            @RequestPart("files") MultipartFile[] files
     ) {
         try {
+            MultipartFile pdfFile = null;
+            MultipartFile jsonFile = null;
+
+            for (MultipartFile file : files) {
+                if (file.getOriginalFilename().endsWith(".pdf")) {
+                    pdfFile = file;
+                } else if (file.getOriginalFilename().endsWith(".json")) {
+                    jsonFile = file;
+                }
+            }
+            if (pdfFile == null || jsonFile == null) {
+                return ResponseEntity.badRequest().body("Both PDF and JSON files are required.");
+            }
+
             JsonNode rootNode = objectMapper.readTree(jsonFile.getInputStream());
             int numOfQuestions = rootNode.path("option").path("numOfQuestions").asInt();
 
-            JsonNode jsonNode = questionGenerationFacade.generateQuestionByGuest(File, numOfQuestions);
-
+            JsonNode jsonNode = questionGenerationFacade.generateQuestionByGuest(pdfFile, numOfQuestions);
             return ResponseEntity.ok(jsonNode);
 
         } catch (Exception e) {
-            return ResponseEntity.status(500).body("Error parsing JSON: " + e.getMessage());
+            return ResponseEntity.status(500).body("Error processing files: " + e.getMessage());
         }
     }
 
     @PostMapping("api/file/upload/member")
     public ResponseEntity<?> uploadFileByMember(
-            @RequestPart("file") MultipartFile File,
-            @RequestPart("jsonFile") MultipartFile jsonFile
+            @RequestPart("files") MultipartFile[] files
     ) {
         try {
+            MultipartFile pdfFile = null;
+            MultipartFile jsonFile = null;
+
+            for (MultipartFile file : files) {
+                if (file.getOriginalFilename().endsWith(".pdf")) {
+                    pdfFile = file;
+                } else if (file.getOriginalFilename().endsWith(".json")) {
+                    jsonFile = file;
+                }
+            }
+            if (pdfFile == null || jsonFile == null) {
+                return ResponseEntity.badRequest().body("Both PDF and JSON files are required.");
+            }
+
             JsonNode rootNode = objectMapper.readTree(jsonFile.getInputStream());
             int numOfQuestions = rootNode.path("option").path("numOfQuestions").asInt();
 
-            questionGenerationFacade.generateQuestionByMember(File, numOfQuestions);
+            questionGenerationFacade.generateQuestionByMember(pdfFile, numOfQuestions);
             return ResponseEntity.ok(null);
 
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(null);
+            return ResponseEntity.status(500).body("Error processing files: " + e.getMessage());
         }
     }
 
