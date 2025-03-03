@@ -2,9 +2,9 @@ package com.buildup.nextQuestion.controller;
 
 
 import com.buildup.nextQuestion.domain.LocalMember;
-import com.buildup.nextQuestion.dto.LoginDTOrequest;
-import com.buildup.nextQuestion.dto.LoginDTOresponse;
-import com.buildup.nextQuestion.dto.RegistDTORequest;
+import com.buildup.nextQuestion.dto.member.LoginRequest;
+import com.buildup.nextQuestion.dto.member.LoginResponse;
+import com.buildup.nextQuestion.dto.member.RegistRequest;
 import com.buildup.nextQuestion.service.LocalMemberService;
 import com.buildup.nextQuestion.service.MemberService;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +22,7 @@ public class MemberController {
     private final MemberService memberService;
 
     @PostMapping("public/member/regist")
-    public ResponseEntity<?> register(@RequestBody RegistDTORequest registDTORequest) {
+    public ResponseEntity<String> register(@RequestBody RegistRequest registDTORequest) {
         try {
             // 회원가입 처리
             LocalMember localMember = localMemberService.register(registDTORequest);
@@ -41,9 +41,10 @@ public class MemberController {
     }
 
     @PostMapping("public/member/login/local")
-    public ResponseEntity<?> login(@RequestBody LoginDTOrequest loginDTOrequest) {
+    public ResponseEntity<?> login(
+            @RequestBody LoginRequest loginDTOrequest) {
         try {
-            LoginDTOresponse response = memberService.login(loginDTOrequest);
+            LoginResponse response = memberService.login(loginDTOrequest);
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());

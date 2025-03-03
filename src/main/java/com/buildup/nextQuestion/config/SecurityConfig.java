@@ -42,7 +42,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/public/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN") // ADMIN만 접근 가능
-                        .requestMatchers("/user/**").hasAnyRole("USER", "ADMIN") // USER 이상 접근 가능
+                        .requestMatchers("/member/**").hasAnyRole("MEMBER", "ADMIN") // USER 이상 접근 가능
                         .anyRequest().authenticated() // 그 외 모든 요청은 인증 필요
                 )
                 .addFilterBefore(new JwtAuthenticationFilter(jwtUtility), UsernamePasswordAuthenticationFilter.class);

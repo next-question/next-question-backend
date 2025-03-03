@@ -19,10 +19,7 @@ public class WorkBookInfo {
     @JoinColumn(name = "member_id")
     private Member member;
 
-
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(name = "work_book_id")
-    private WorkBook workBook;
+    private String name;
 
     private Timestamp recentSolveDate; // 문제집 최근 학습일
 
