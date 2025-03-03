@@ -1,4 +1,4 @@
-package com.buildup.nextQuestion.Service;
+package com.buildup.nextQuestion.service;
 
 import lombok.AllArgsConstructor;
 import org.apache.pdfbox.pdmodel.PDDocument;

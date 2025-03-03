@@ -1,13 +1,11 @@
-package com.buildup.nextQuestion.Controller;
-import com.buildup.nextQuestion.Service.QuestionGenerationFacade;
+package com.buildup.nextQuestion.controller;
+import com.buildup.nextQuestion.service.QuestionGenerationFacade;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.io.IOException;
 
 @RestController
 @AllArgsConstructor
@@ -16,7 +14,7 @@ public class QuestionController {
     private final QuestionGenerationFacade questionGenerationFacade;
     private final ObjectMapper objectMapper;
 
-    @PostMapping("api/file/upload/guest")
+    @PostMapping("guest/file/upload/")
     public ResponseEntity<?> uploadFileByGuest(
             @RequestPart("files") MultipartFile[] files
     ) {
@@ -46,7 +44,7 @@ public class QuestionController {
         }
     }
 
-    @PostMapping("api/file/upload/member")
+    @PostMapping("member/file/upload")
     public ResponseEntity<?> uploadFileByMember(
             @RequestPart("files") MultipartFile[] files
     ) {

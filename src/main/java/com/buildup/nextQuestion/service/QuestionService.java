@@ -1,9 +1,9 @@
-package com.buildup.nextQuestion.Service;
+package com.buildup.nextQuestion.service;
 
-import com.buildup.nextQuestion.Repository.QuestionInfoByMemberRepository;
+import com.buildup.nextQuestion.repository.QuestionInfoByMemberRepository;
 import com.buildup.nextQuestion.domain.QuestionInfoByMember;
 import com.buildup.nextQuestion.dto.QuestionUpdateRequest;
-import com.buildup.nextQuestion.Repository.QuestionRepository;
+import com.buildup.nextQuestion.repository.QuestionRepository;
 import com.buildup.nextQuestion.domain.Question;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
