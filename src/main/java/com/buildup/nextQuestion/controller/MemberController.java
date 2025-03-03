@@ -28,7 +28,7 @@ public class MemberController {
             LocalMember localMember = localMemberService.register(registDTORequest);
 
             // 회원가입 성공 응답
-            return ResponseEntity.status(HttpStatus.CREATED).body("회원가입 성공. 회원 ID: " + localMember.getId());
+            return ResponseEntity.status(HttpStatus.CREATED).body("회원가입에 성공했습니다.");
 
         } catch (IllegalArgumentException e) {
             // 중복된 아이디 또는 이메일
