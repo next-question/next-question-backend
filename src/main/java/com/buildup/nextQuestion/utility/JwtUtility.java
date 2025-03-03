@@ -5,7 +5,6 @@ import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
 import java.util.Date;
-import java.util.Map;
 
 @Service
 public class JwtUtility {
