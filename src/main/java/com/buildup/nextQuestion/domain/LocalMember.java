@@ -1,29 +1,42 @@
 package com.buildup.nextQuestion.domain;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
 @Getter @Setter
-@Table(name = "local_member")
+@NoArgsConstructor
+@AllArgsConstructor
+@Table(name = "local_member", uniqueConstraints = {
+        @UniqueConstraint(columnNames = "user_id"),
+        @UniqueConstraint(columnNames = "email")
+})
 public class LocalMember {
 
-    @Id @GeneratedValue
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "local_member_id")
     private Long id;
 
-    @Column(columnDefinition = "VARCHAR(15)")
-    private String user_id;
+    @Column(nullable = false, length = 15)
+    private String userId;
 
-    @Column(columnDefinition = "VARCHAR(20)")
-    private String pwd;
+    @Column(nullable = false, length = 255)
+    private String password;
 
-    @Column(columnDefinition = "VARCHAR(40)")
+    @Column(nullable = false, length = 40)
     private String email;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(name = "member_id")
+    @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 
+    public LocalMember(String userId, String password, String email, Member member) {
+        this.userId = userId;
+        this.password = password;
+        this.email = email;
+        this.member = member;
+    }
 }
