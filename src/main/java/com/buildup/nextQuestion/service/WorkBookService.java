@@ -9,6 +9,7 @@ import com.buildup.nextQuestion.dto.workBook.GetWorkBookInfoResponse;
 import com.buildup.nextQuestion.repository.LocalMemberRepository;
 import com.buildup.nextQuestion.repository.MemberRepository;
 import com.buildup.nextQuestion.repository.WorkBookInfoRepository;
+import com.buildup.nextQuestion.repository.WorkBookRepository;
 import com.buildup.nextQuestion.utility.JwtUtility;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -30,6 +31,7 @@ public class WorkBookService {
     private final WorkBookInfoRepository workBookInfoRepository;
     private final LocalMemberRepository localMemberRepository;
     private final EncryptionService encryptionService;
+    private final WorkBookRepository workBookRepository;
 
     @Transactional
     public WorkBookInfo createWorkBook(String token, CreateWorkBookRequest request) {
@@ -99,7 +101,10 @@ public class WorkBookService {
         if (workBooksToDelete.size() != decryptedIds.size()) {
             throw new SecurityException("문제집을 삭제하는데 오류가 발생했습니다.");
         }
-
+        //해당 문제집의 문제 전부 삭제
+        for (Long decryptedId : decryptedIds)
+            workBookRepository.deleteAllByWorkBookInfoId(decryptedId);
+        //문제집도 삭제
         workBookInfoRepository.deleteAll(workBooksToDelete);
     }
 }

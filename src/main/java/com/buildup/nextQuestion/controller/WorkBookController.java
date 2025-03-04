@@ -50,7 +50,7 @@ public class WorkBookController {
         }
     }
 
-    @PostMapping("public/workBook/delete")
+    @DeleteMapping("public/workBook/delete")
     public ResponseEntity<String> deleteWorkBook(
             @RequestHeader("Authorization") String token,
             @RequestBody List<String> encryptedWorkBookInfoIds
