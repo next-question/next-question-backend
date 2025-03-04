@@ -1,4 +1,4 @@
-package com.buildup.nextQuestion.dto;
+package com.buildup.nextQuestion.dto.question;
 
 import lombok.*;
 
@@ -7,7 +7,6 @@ import java.sql.Timestamp;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Getter @Setter
 public class QuestionUpdateRequest {
     private Long questionId;
     private Boolean wrong;

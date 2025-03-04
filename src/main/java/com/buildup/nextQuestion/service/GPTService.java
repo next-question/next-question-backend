@@ -1,7 +1,7 @@
 package com.buildup.nextQuestion.service;
 
-import com.buildup.nextQuestion.dto.ChatGPTRequest;
-import com.buildup.nextQuestion.dto.ChatGPTResponse;
+import com.buildup.nextQuestion.dto.gpt.ChatGPTRequest;
+import com.buildup.nextQuestion.dto.gpt.ChatGPTResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

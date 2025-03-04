@@ -3,7 +3,7 @@ package com.buildup.nextQuestion.service;
 import com.buildup.nextQuestion.domain.LocalMember;
 import com.buildup.nextQuestion.domain.Member;
 import com.buildup.nextQuestion.domain.enums.LoginType;
-import com.buildup.nextQuestion.dto.RegistDTORequest;
+import com.buildup.nextQuestion.dto.member.RegistRequest;
 import com.buildup.nextQuestion.repository.LocalMemberRepository;
 import com.buildup.nextQuestion.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +21,7 @@ public class LocalMemberService {
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
-    public LocalMember register(RegistDTORequest registDTORequest) {
+    public LocalMember register(RegistRequest registDTORequest) {
 
         String userId = registDTORequest.getUserId();
         String password = registDTORequest.getPassword();

@@ -2,19 +2,19 @@ package com.buildup.nextQuestion.utility;
 
 import com.buildup.nextQuestion.domain.Member;
 import com.buildup.nextQuestion.repository.LocalMemberRepository;
-import com.buildup.nextQuestion.repository.MemberRepository;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
 import java.util.Date;
 
 @Service
+@RequiredArgsConstructor
 public class JwtUtility {
 
     private final SecretKey secretKey;
-    private LocalMemberRepository localMemberRepository;
-    private MemberRepository memberRepository;
+
     public JwtUtility() {
         this.secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
     }
@@ -39,15 +39,14 @@ public class JwtUtility {
                 .getBody();
     }
 
-    public Member getMemberFromToken(String token) {
+    public String getUserIdFromToken(String token) {
         Claims claims = Jwts.parserBuilder()
                 .setSigningKey(secretKey)
                 .build()
                 .parseClaimsJws(token.replace("Bearer ", "")) // "Bearer " 제거
                 .getBody();
-        String userId = claims.getSubject();
 
-        return localMemberRepository.findByUserId(userId).get().getMember(); // 이메일 반환
+        return claims.getSubject();
     }
 
 

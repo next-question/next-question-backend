@@ -12,7 +12,7 @@ public class SocialMember {
 
     @Id @GeneratedValue
     @Column(name = "social_member_id")
-    private int id;
+    private Long id;
 
     @Column(columnDefinition = "VARCHAR(15)")
     private String userId;

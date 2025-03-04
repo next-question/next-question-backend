@@ -3,12 +3,13 @@ import com.buildup.nextQuestion.service.QuestionGenerationFacade;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class QuestionController {
 
     private final QuestionGenerationFacade questionGenerationFacade;

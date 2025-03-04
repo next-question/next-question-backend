@@ -1,4 +1,4 @@
-package com.buildup.nextQuestion.dto;
+package com.buildup.nextQuestion.dto.gpt;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
