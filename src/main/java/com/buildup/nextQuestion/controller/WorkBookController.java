@@ -40,13 +40,26 @@ public class WorkBookController {
             List<GetWorkBookInfoResponse> workBookInfos = workBookService.getWorkBookInfo(token);
             return ResponseEntity.ok(workBookInfos);
         } catch (Exception e) {
-            // 예외 메시지를 JSON 형태로 반환
+
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "워크북 정보를 가져오는 중 오류 발생" + e.getMessage());
 
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(errorResponse);
+        }
+    }
+
+    @PostMapping("public/workBook/delete")
+    public ResponseEntity<String> deleteWorkBook(
+            @RequestHeader("Authorization") String token,
+            @RequestBody List<String> encryptedWorkBookInfoIds
+    ){
+        try{
+            workBookService.deleteWorkBookInfo(token, encryptedWorkBookInfoIds);
+            return ResponseEntity.ok("문제집이 성공적으로 삭제되었습니다.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
 
