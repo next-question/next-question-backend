@@ -6,6 +6,7 @@ import com.buildup.nextQuestion.domain.WorkBook;
 import com.buildup.nextQuestion.domain.WorkBookInfo;
 import com.buildup.nextQuestion.dto.workBook.CreateWorkBookRequest;
 import com.buildup.nextQuestion.dto.workBook.GetWorkBookInfoResponse;
+import com.buildup.nextQuestion.dto.workBook.UpdateWorkBookInfoRequest;
 import com.buildup.nextQuestion.repository.LocalMemberRepository;
 import com.buildup.nextQuestion.repository.MemberRepository;
 import com.buildup.nextQuestion.repository.WorkBookInfoRepository;
@@ -99,7 +100,7 @@ public class WorkBookService {
                 .collect(Collectors.toList());
 
         if (workBooksToDelete.size() != decryptedIds.size()) {
-            throw new SecurityException("문제집을 삭제하는데 오류가 발생했습니다.");
+            throw new SecurityException("문제집 삭제에 오류가 발생했습니다.");
         }
         //해당 문제집의 문제 전부 삭제
         for (Long decryptedId : decryptedIds)
@@ -107,4 +108,24 @@ public class WorkBookService {
         //문제집도 삭제
         workBookInfoRepository.deleteAll(workBooksToDelete);
     }
+
+    @Transactional
+    public void updateWorkBookInfo(String token, UpdateWorkBookInfoRequest updateWorkBookInfoRequest) throws Exception {
+        String userId = jwtUtility.getUserIdFromToken(token);
+        Member member = localMemberRepository.findByUserId(userId).get().getMember();
+
+        Long workbookInfoId = encryptionService.decryptPrimaryKey(updateWorkBookInfoRequest.getEncryptedWorkBookInfoIds());
+        WorkBookInfo workBookInfo = workBookInfoRepository.findById(workbookInfoId).orElseThrow(
+                () -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+        Long requestedMemberId = workBookInfo.getMember().getId();
+
+        // 삭제하려는 문제집이 해당 토큰의 멤버 문제집인지 검증
+        if (!requestedMemberId.equals(member.getId())) {
+            throw new SecurityException("문제집 업데이트에 오류가 발생했습니다.");
+        }
+
+        workBookInfo.setName(updateWorkBookInfoRequest.getName());
+    }
+
+
 }

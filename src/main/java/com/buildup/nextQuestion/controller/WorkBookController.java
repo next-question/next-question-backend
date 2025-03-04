@@ -2,6 +2,7 @@ package com.buildup.nextQuestion.controller;
 
 import com.buildup.nextQuestion.dto.workBook.CreateWorkBookRequest;
 import com.buildup.nextQuestion.dto.workBook.GetWorkBookInfoResponse;
+import com.buildup.nextQuestion.dto.workBook.UpdateWorkBookInfoRequest;
 import com.buildup.nextQuestion.service.WorkBookService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -58,6 +59,19 @@ public class WorkBookController {
         try{
             workBookService.deleteWorkBookInfo(token, encryptedWorkBookInfoIds);
             return ResponseEntity.ok("문제집이 성공적으로 삭제되었습니다.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    @PatchMapping("public/workBook/update")
+    public ResponseEntity<String> deleteWorkBook(
+            @RequestHeader("Authorization") String token,
+            @RequestBody UpdateWorkBookInfoRequest updateWorkBookInfoRequest
+            ){
+        try{
+            workBookService.updateWorkBookInfo(token, updateWorkBookInfoRequest);
+            return ResponseEntity.ok("문제집 명이 성공적으로 변경되었습니다.");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
