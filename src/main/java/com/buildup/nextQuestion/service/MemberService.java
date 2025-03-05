@@ -30,7 +30,7 @@ public class MemberService {
         if (!passwordEncoder.matches(password, localMember.getPassword())) {
             throw new IllegalArgumentException("아이디 또는 비밀번호가 올바르지 않습니다.");
         }
-        LoginResponse loginDTOresponse = new LoginResponse(jwtUtility.generateToken(userId),member.getNickname());
+        LoginResponse loginDTOresponse = new LoginResponse(jwtUtility.generateToken(userId, member.getRole()),member.getNickname(), member.getRole());
         // 3. JWT 토큰 생성 후 반환
         return loginDTOresponse;
     }

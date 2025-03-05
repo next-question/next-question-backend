@@ -14,8 +14,11 @@ import org.springframework.web.client.RestTemplate;
 public class GPTService {
 
 
-    @Value("${openai.prompt}")
-    private String prompt;
+    @Value("${openai.base.prompt}")
+    private String basePrompt;
+
+    @Value("${openai.end.prompt}")
+    private String endPrompt;
 
     @Value("${openai.model}")
     private String model;
@@ -23,12 +26,13 @@ public class GPTService {
     @Value("${openai.api.url}")
     private String apiURL;
 
+
     @Autowired
     private RestTemplate template;
 
 
-    public String requestGPT(String content, int numOfQuestions){
-
+    public String requestGPT(String content, String numOfQuestions){
+        String prompt = basePrompt +  numOfQuestions + endPrompt;
         prompt += "\n" + content;
         ChatGPTRequest request = new ChatGPTRequest(model, prompt);
         ChatGPTResponse chatGPTResponse =  template.postForObject(apiURL, request, ChatGPTResponse.class);

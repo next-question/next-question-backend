@@ -1,6 +1,7 @@
 package com.buildup.nextQuestion.domain;
 
 import com.buildup.nextQuestion.domain.enums.LoginType;
+import com.buildup.nextQuestion.domain.enums.Role;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -28,9 +29,12 @@ public class Member {
     @Column(nullable = false)
     private LoginType logintype;
 
+    private Role role;
+
     public Member(String nickname, LoginType logintype) {
         this.nickname = nickname;
         this.logintype = logintype;
+        this.role = Role.MEMBER;
     }
 }
 
