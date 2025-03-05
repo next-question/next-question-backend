@@ -75,14 +75,20 @@ public class QuestionService {
                 encryptionService.decryptPrimaryKey(
                         saveQuestionRequest.getEncryptedWorkBookInfoId()))
                 .get();
+
+        // 회원 문제집 저장
         for (String encryptedQeustionId : saveQuestionRequest.getEncryptedQuestionIds()) {
             Question question = questionRepository.findById(
                     encryptionService.decryptPrimaryKey(encryptedQeustionId))
                     .get();
 
             WorkBook workBook = new WorkBook(question, workBookInfo);
+            QuestionInfoByMember questionInfoByMember = new QuestionInfoByMember(member,question);
+            questionInfoByMemberRepository.save(questionInfoByMember);
             workBookRepository.save(workBook);
         }
+
+
 
     }
 }
