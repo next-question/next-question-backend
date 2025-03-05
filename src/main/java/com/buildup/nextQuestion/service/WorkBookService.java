@@ -114,7 +114,7 @@ public class WorkBookService {
         String userId = jwtUtility.getUserIdFromToken(token);
         Member member = localMemberRepository.findByUserId(userId).get().getMember();
 
-        Long workbookInfoId = encryptionService.decryptPrimaryKey(updateWorkBookInfoRequest.getEncryptedWorkBookInfoIds());
+        Long workbookInfoId = encryptionService.decryptPrimaryKey(updateWorkBookInfoRequest.getEncryptedWorkBookInfoId());
         WorkBookInfo workBookInfo = workBookInfoRepository.findById(workbookInfoId).orElseThrow(
                 () -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
         Long requestedMemberId = workBookInfo.getMember().getId();
