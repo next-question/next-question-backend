@@ -2,6 +2,7 @@ package com.buildup.nextQuestion.controller;
 import com.buildup.nextQuestion.dto.member.LoginRequest;
 import com.buildup.nextQuestion.dto.member.LoginResponse;
 import com.buildup.nextQuestion.dto.question.SaveQuestionRequest;
+import com.buildup.nextQuestion.dto.question.SearchQuestionByMemberResponse;
 import com.buildup.nextQuestion.dto.question.UploadFileByMemberReqeust;
 import com.buildup.nextQuestion.service.QuestionGenerationFacade;
 import com.buildup.nextQuestion.service.QuestionService;
@@ -69,6 +70,36 @@ public class QuestionController {
         try {
             questionService.saveQuestion(token, saveQuestionRequest);
             return ResponseEntity.ok("문제를 성공적으로 저장했습니다.");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("서버 오류가 발생했습니다." + e.getMessage());
+        }
+    }
+
+    @GetMapping("member/question/search")
+    public ResponseEntity<?> saveQuestion(
+            @RequestHeader("Authorization") String token)
+    {
+        try {
+            List<SearchQuestionByMemberResponse> response = questionService.searchQuestionByMember(token);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("서버 오류가 발생했습니다." + e.getMessage());
+        }
+    }
+
+    @PostMapping("member/question/delete")
+    public ResponseEntity<?> deleteQuestion(
+            @RequestHeader("Authorization") String token,
+            @RequestBody List<String> encryptedQuestionInfoIds
+            )
+    {
+        try {
+            questionService.deleteQuestion(token, encryptedQuestionInfoIds);
+            return ResponseEntity.ok("문제가 성공적으로 삭제되었습니다.");
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
         } catch (Exception e) {
