@@ -1,13 +1,13 @@
 package com.buildup.nextQuestion.utility;
 
-import com.buildup.nextQuestion.domain.Member;
-import com.buildup.nextQuestion.repository.LocalMemberRepository;
+import com.buildup.nextQuestion.domain.enums.Role;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
 import java.util.Date;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -21,11 +21,12 @@ public class JwtUtility {
 
     private static final long EXPIRATION_TIME = 1000L * 60 * 60; // 1시간
 
-    public String generateToken(String userId) {
+    public String generateToken(String userId, Role role) {
         return Jwts.builder()
                 .setSubject(userId)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+                .addClaims(Map.of("role", role.name()))
                 .signWith(secretKey)
                 .compact();
     }

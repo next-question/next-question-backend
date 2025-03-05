@@ -8,25 +8,29 @@ import com.buildup.nextQuestion.domain.Question;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
-
+@RequiredArgsConstructor
 public class QuestionService {
 
-    @Autowired
-    private QuestionRepository questionRepository;
-    private QuestionInfoByMemberRepository questionInfoByMemberRepository;
+
+    private final QuestionRepository questionRepository;
+    private final QuestionInfoByMemberRepository questionInfoByMemberRepository;
+    private final EncryptionService encryptionService;
 
     //생성된 문제 리스트 저장
-    public void saveAll(JsonNode jsonNode) throws IOException {
+    public List<String> saveAll(JsonNode jsonNode) throws Exception {
         ObjectMapper objectMapper = new ObjectMapper();
 
         JsonNode questionsNode = jsonNode.get("questions");
+        List<String> encryptedQeustionIds = new ArrayList<>();
         if (questionsNode != null && questionsNode.isArray()) {
 
             List<Question> questions = objectMapper.readValue(
@@ -34,8 +38,16 @@ public class QuestionService {
                     new TypeReference<List<Question>>() {
                     }
             );
-            questionRepository.saveAll(questions);
+            List<Question> createdQuestions = questionRepository.saveAll(questions);
+
+            for (Question createdQuestion : createdQuestions) {
+                String encryptedQuestionId = encryptionService.encryptPrimaryKey(createdQuestion.getId());
+                encryptedQeustionIds.add(encryptedQuestionId);
+
+            }
         }
+
+        return encryptedQeustionIds;
     }
 
 

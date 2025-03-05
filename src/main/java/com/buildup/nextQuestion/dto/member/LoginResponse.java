@@ -1,5 +1,6 @@
 package com.buildup.nextQuestion.dto.member;
 
+import com.buildup.nextQuestion.domain.enums.Role;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,4 +11,5 @@ import lombok.NoArgsConstructor;
 public class LoginResponse {
     private String accessToken;
     private String nickname;
+    private Role role;
 }
