@@ -5,6 +5,7 @@ import com.buildup.nextQuestion.domain.Member;
 import com.buildup.nextQuestion.domain.WorkBook;
 import com.buildup.nextQuestion.domain.WorkBookInfo;
 import com.buildup.nextQuestion.dto.workBook.CreateWorkBookRequest;
+import com.buildup.nextQuestion.dto.workBook.CreateWorkBookResponse;
 import com.buildup.nextQuestion.dto.workBook.GetWorkBookInfoResponse;
 import com.buildup.nextQuestion.dto.workBook.UpdateWorkBookInfoRequest;
 import com.buildup.nextQuestion.repository.LocalMemberRepository;
@@ -35,7 +36,7 @@ public class WorkBookService {
     private final WorkBookRepository workBookRepository;
 
     @Transactional
-    public WorkBookInfo createWorkBook(String token, CreateWorkBookRequest request) {
+    public CreateWorkBookResponse createWorkBook(String token, CreateWorkBookRequest request) throws Exception {
 
         String userId = jwtUtility.getUserIdFromToken(token);
         Member member = localMemberRepository.findByUserId(userId).get().getMember();
@@ -44,8 +45,12 @@ public class WorkBookService {
         workBookInfo.setMember(member);
         workBookInfo.setName(request.getWorkBookName());
         workBookInfo.setRecentSolveDate(null);
+        Long workBookInfoId = workBookInfoRepository.save(workBookInfo).getId();
+        CreateWorkBookResponse createWorkBookResponse = new CreateWorkBookResponse();
+        createWorkBookResponse.setEncryptedWorkBookId(encryptionService.encryptPrimaryKey(workBookInfoId));
 
-        return workBookInfoRepository.save(workBookInfo);
+        return createWorkBookResponse;
+
     }
 
     @Transactional

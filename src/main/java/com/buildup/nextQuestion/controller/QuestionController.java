@@ -1,11 +1,17 @@
 package com.buildup.nextQuestion.controller;
+import com.buildup.nextQuestion.dto.member.LoginRequest;
+import com.buildup.nextQuestion.dto.member.LoginResponse;
+import com.buildup.nextQuestion.dto.question.SaveQuestionRequest;
 import com.buildup.nextQuestion.dto.question.UploadFileByMemberReqeust;
 import com.buildup.nextQuestion.service.QuestionGenerationFacade;
+import com.buildup.nextQuestion.service.QuestionService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -16,17 +22,18 @@ import java.util.List;
 public class QuestionController {
 
     private final QuestionGenerationFacade questionGenerationFacade;
+    private final QuestionService questionService;
 
-    @PostMapping("public/file/upload")
+    @PostMapping("public/question/upload")
     public ResponseEntity<?> uploadFileByGuest(
-            @RequestPart MultipartFile pdfFile
+            @RequestPart MultipartFile file
     ) {
         try {
-            if (pdfFile == null) {
+            if (file == null) {
                 return ResponseEntity.badRequest().body("PDF file is required.");
             }
 
-            JsonNode jsonNode = questionGenerationFacade.generateQuestionByGuest(pdfFile);
+            JsonNode jsonNode = questionGenerationFacade.generateQuestionByGuest(file);
             return ResponseEntity.ok(jsonNode);
 
         } catch (Exception e) {
@@ -34,7 +41,7 @@ public class QuestionController {
         }
     }
 
-    @PostMapping("member/file/upload")
+    @PostMapping("member/question/upload")
     public ResponseEntity<?> uploadFileByMember(
             @RequestHeader("Authorization") String token,
             @ModelAttribute UploadFileByMemberReqeust uploadFileByMemberReqeust
@@ -52,6 +59,20 @@ public class QuestionController {
 
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Error processing files: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("member/question/save")
+    public ResponseEntity<?> saveQuestion(
+            @RequestHeader("Authorization") String token,
+            @RequestBody SaveQuestionRequest saveQuestionRequest) {
+        try {
+            questionService.saveQuestion(token, saveQuestionRequest);
+            return ResponseEntity.ok("문제를 성공적으로 저장했습니다.");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("서버 오류가 발생했습니다." + e.getMessage());
         }
     }
 

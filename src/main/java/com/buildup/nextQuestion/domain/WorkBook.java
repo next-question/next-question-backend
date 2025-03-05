@@ -2,11 +2,14 @@ package com.buildup.nextQuestion.domain;
 
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
 @Getter@Setter
+@NoArgsConstructor
 @Table(name = "work_book")
 public class WorkBook {
 
@@ -21,4 +24,10 @@ public class WorkBook {
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "work_book_info_id")
     private WorkBookInfo workBookInfo;
+
+    public WorkBook(Question question, WorkBookInfo workBookInfo) {
+        this.question = question;
+        this.workBookInfo = workBookInfo;
+
+    }
 }

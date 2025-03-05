@@ -1,6 +1,7 @@
 package com.buildup.nextQuestion.controller;
 
 import com.buildup.nextQuestion.dto.workBook.CreateWorkBookRequest;
+import com.buildup.nextQuestion.dto.workBook.CreateWorkBookResponse;
 import com.buildup.nextQuestion.dto.workBook.GetWorkBookInfoResponse;
 import com.buildup.nextQuestion.dto.workBook.UpdateWorkBookInfoRequest;
 import com.buildup.nextQuestion.service.WorkBookService;
@@ -21,13 +22,13 @@ public class WorkBookController {
 
 
     @PostMapping("public/workBook/create")
-    public ResponseEntity<String> createWorkBook(
+    public ResponseEntity<?> createWorkBook(
             @RequestHeader("Authorization") String token,
             @RequestBody CreateWorkBookRequest request
     ){
         try{
-            workBookService.createWorkBook(token, request);
-            return ResponseEntity.ok("문제집이 성공적으로 생성되었습니다.");
+            CreateWorkBookResponse createWorkBookResponse = workBookService.createWorkBook(token, request);
+            return ResponseEntity.ok(createWorkBookResponse);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
