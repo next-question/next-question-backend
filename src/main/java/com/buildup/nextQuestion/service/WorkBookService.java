@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 
@@ -40,10 +41,16 @@ public class WorkBookService {
 
         String userId = jwtUtility.getUserIdFromToken(token);
         Member member = localMemberRepository.findByUserId(userId).get().getMember();
+        String requestedWorkBookName = request.getWorkBookName();
+
+        List<WorkBookInfo> infos = workBookInfoRepository.findByName(requestedWorkBookName);
+        if (!infos.isEmpty()) {
+            throw new IllegalArgumentException("이미 존재하는 문제집입니다.");
+        }
 
         WorkBookInfo workBookInfo = new WorkBookInfo();
         workBookInfo.setMember(member);
-        workBookInfo.setName(request.getWorkBookName());
+        workBookInfo.setName(requestedWorkBookName);
         workBookInfo.setRecentSolveDate(null);
         Long workBookInfoId = workBookInfoRepository.save(workBookInfo).getId();
         CreateWorkBookResponse createWorkBookResponse = new CreateWorkBookResponse();
@@ -115,11 +122,18 @@ public class WorkBookService {
     }
 
     @Transactional
-    public void updateWorkBookInfo(String token, UpdateWorkBookInfoRequest updateWorkBookInfoRequest) throws Exception {
+    public void updateWorkBookInfo(String token, UpdateWorkBookInfoRequest request) throws Exception {
         String userId = jwtUtility.getUserIdFromToken(token);
         Member member = localMemberRepository.findByUserId(userId).get().getMember();
 
-        Long workbookInfoId = encryptionService.decryptPrimaryKey(updateWorkBookInfoRequest.getEncryptedWorkBookInfoId());
+        String requestedWorkBookName = request.getName();
+
+        List<WorkBookInfo> infos = workBookInfoRepository.findByName(requestedWorkBookName);
+        if (!infos.isEmpty()) {
+            throw new IllegalArgumentException("이미 존재하는 문제집입니다.");
+        }
+
+        Long workbookInfoId = encryptionService.decryptPrimaryKey(request.getEncryptedWorkBookInfoId());
         WorkBookInfo workBookInfo = workBookInfoRepository.findById(workbookInfoId).orElseThrow(
                 () -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
         Long requestedMemberId = workBookInfo.getMember().getId();
@@ -129,7 +143,7 @@ public class WorkBookService {
             throw new SecurityException("문제집 업데이트에 오류가 발생했습니다.");
         }
 
-        workBookInfo.setName(updateWorkBookInfoRequest.getName());
+        workBookInfo.setName(requestedWorkBookName);
     }
 
 
