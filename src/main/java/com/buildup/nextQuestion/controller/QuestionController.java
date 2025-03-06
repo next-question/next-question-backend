@@ -1,6 +1,7 @@
 package com.buildup.nextQuestion.controller;
 import com.buildup.nextQuestion.dto.member.LoginRequest;
 import com.buildup.nextQuestion.dto.member.LoginResponse;
+import com.buildup.nextQuestion.dto.question.MoveQuestionRequest;
 import com.buildup.nextQuestion.dto.question.SaveQuestionRequest;
 import com.buildup.nextQuestion.dto.question.SearchQuestionByMemberResponse;
 import com.buildup.nextQuestion.dto.question.UploadFileByMemberReqeust;
@@ -104,6 +105,23 @@ public class QuestionController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("서버 오류가 발생했습니다." + e.getMessage());
+        }
+    }
+
+
+    @PostMapping("member/question/move")
+    public ResponseEntity<?> deleteQuestion(
+            @RequestHeader("Authorization") String token,
+            @RequestBody MoveQuestionRequest request
+            )
+    {
+        try {
+            questionService.moveQuestion(token, request);
+            return ResponseEntity.ok("문제를 성공적으로 이동했습니다.");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
 

@@ -1,15 +1,13 @@
 package com.buildup.nextQuestion.service;
 
-import com.buildup.nextQuestion.domain.LocalMember;
 import com.buildup.nextQuestion.domain.Member;
-import com.buildup.nextQuestion.domain.WorkBook;
 import com.buildup.nextQuestion.domain.WorkBookInfo;
 import com.buildup.nextQuestion.dto.workBook.CreateWorkBookRequest;
 import com.buildup.nextQuestion.dto.workBook.CreateWorkBookResponse;
 import com.buildup.nextQuestion.dto.workBook.GetWorkBookInfoResponse;
 import com.buildup.nextQuestion.dto.workBook.UpdateWorkBookInfoRequest;
 import com.buildup.nextQuestion.repository.LocalMemberRepository;
-import com.buildup.nextQuestion.repository.MemberRepository;
+import com.buildup.nextQuestion.repository.QuestionInfoByMemberRepository;
 import com.buildup.nextQuestion.repository.WorkBookInfoRepository;
 import com.buildup.nextQuestion.repository.WorkBookRepository;
 import com.buildup.nextQuestion.utility.JwtUtility;
@@ -20,8 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 
@@ -35,6 +31,7 @@ public class WorkBookService {
     private final LocalMemberRepository localMemberRepository;
     private final EncryptionService encryptionService;
     private final WorkBookRepository workBookRepository;
+    private final QuestionInfoByMemberRepository questionInfoByMemberRepository;
 
     @Transactional
     public CreateWorkBookResponse createWorkBook(String token, CreateWorkBookRequest request) throws Exception {
@@ -54,7 +51,7 @@ public class WorkBookService {
         workBookInfo.setRecentSolveDate(null);
         Long workBookInfoId = workBookInfoRepository.save(workBookInfo).getId();
         CreateWorkBookResponse createWorkBookResponse = new CreateWorkBookResponse();
-        createWorkBookResponse.setEncryptedWorkBookId(encryptionService.encryptPrimaryKey(workBookInfoId));
+        createWorkBookResponse.setEncryptedWorkBookInfoId(encryptionService.encryptPrimaryKey(workBookInfoId));
 
         return createWorkBookResponse;
 
@@ -116,7 +113,9 @@ public class WorkBookService {
         }
         //해당 문제집의 문제 전부 삭제
         for (Long decryptedId : decryptedIds)
+            workBookRepository.findAllByWorkBookInfoId(decryptedId)
             workBookRepository.deleteAllByWorkBookInfoId(decryptedId);
+
         //문제집도 삭제
         workBookInfoRepository.deleteAll(workBooksToDelete);
     }
