@@ -1,6 +1,4 @@
 package com.buildup.nextQuestion.controller;
-import com.buildup.nextQuestion.dto.member.LoginRequest;
-import com.buildup.nextQuestion.dto.member.LoginResponse;
 import com.buildup.nextQuestion.dto.question.MoveQuestionRequest;
 import com.buildup.nextQuestion.dto.question.SaveQuestionRequest;
 import com.buildup.nextQuestion.dto.question.SearchQuestionByMemberResponse;
@@ -8,12 +6,9 @@ import com.buildup.nextQuestion.dto.question.UploadFileByMemberReqeust;
 import com.buildup.nextQuestion.service.QuestionGenerationFacade;
 import com.buildup.nextQuestion.service.QuestionService;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -67,15 +62,15 @@ public class QuestionController {
     @PostMapping("member/question/save")
     public ResponseEntity<?> saveQuestion(
             @RequestHeader("Authorization") String token,
-            @RequestBody SaveQuestionRequest saveQuestionRequest) {
-        try {
-            questionService.saveQuestion(token, saveQuestionRequest);
-            return ResponseEntity.ok("문제를 성공적으로 저장했습니다.");
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("서버 오류가 발생했습니다." + e.getMessage());
-        }
+            @RequestBody SaveQuestionRequest saveQuestionRequest) throws Exception {
+//        try {
+        questionService.saveQuestion(token, saveQuestionRequest);
+        return ResponseEntity.ok("문제를 성공적으로 저장했습니다.");
+//        } catch (IllegalArgumentException e) {
+//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+//        } catch (Exception e) {
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("서버 오류가 발생했습니다." + e.getMessage());
+//        }
     }
 
     @GetMapping("member/question/search")

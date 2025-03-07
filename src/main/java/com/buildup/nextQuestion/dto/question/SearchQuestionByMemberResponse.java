@@ -12,7 +12,7 @@ import java.time.LocalTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SearchQuestionByMemberResponse {
-    private String encryptedQuestionInfoId;
+    private String encryptedQuestionId;
     private String name;
     private QuestionType type;
     private String answer;

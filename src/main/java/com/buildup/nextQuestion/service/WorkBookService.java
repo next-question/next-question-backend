@@ -1,16 +1,16 @@
 package com.buildup.nextQuestion.service;
 
 import com.buildup.nextQuestion.domain.Member;
-import com.buildup.nextQuestion.domain.WorkBook;
 import com.buildup.nextQuestion.domain.WorkBookInfo;
+import com.buildup.nextQuestion.domain.WorkBook;
 import com.buildup.nextQuestion.dto.workBook.CreateWorkBookRequest;
 import com.buildup.nextQuestion.dto.workBook.CreateWorkBookResponse;
 import com.buildup.nextQuestion.dto.workBook.GetWorkBookInfoResponse;
 import com.buildup.nextQuestion.dto.workBook.UpdateWorkBookInfoRequest;
 import com.buildup.nextQuestion.repository.LocalMemberRepository;
-import com.buildup.nextQuestion.repository.QuestionInfoByMemberRepository;
-import com.buildup.nextQuestion.repository.WorkBookInfoRepository;
+import com.buildup.nextQuestion.repository.QuestionRepository;
 import com.buildup.nextQuestion.repository.WorkBookRepository;
+import com.buildup.nextQuestion.repository.WorkBookInfoRepository;
 import com.buildup.nextQuestion.utility.JwtUtility;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -28,11 +28,11 @@ import java.util.stream.Collectors;
 public class WorkBookService {
 
     private final JwtUtility jwtUtility;
-    private final WorkBookInfoRepository workBookInfoRepository;
+    private final WorkBookRepository workBookRepository;
     private final LocalMemberRepository localMemberRepository;
     private final EncryptionService encryptionService;
-    private final WorkBookRepository workBookRepository;
-    private final QuestionInfoByMemberRepository questionInfoByMemberRepository;
+    private final WorkBookInfoRepository workBookInfoRepository;
+    private final QuestionRepository questionRepository;
 
     @Transactional
     public CreateWorkBookResponse createWorkBook(String token, CreateWorkBookRequest request) throws Exception {
@@ -41,18 +41,18 @@ public class WorkBookService {
         Member member = localMemberRepository.findByUserId(userId).get().getMember();
         String requestedWorkBookName = request.getWorkBookName();
 
-        List<WorkBookInfo> infos = workBookInfoRepository.findByName(requestedWorkBookName);
+        List<WorkBook> infos = workBookRepository.findByName(requestedWorkBookName);
         if (!infos.isEmpty()) {
             throw new IllegalArgumentException("이미 존재하는 문제집입니다.");
         }
 
-        WorkBookInfo workBookInfo = new WorkBookInfo();
-        workBookInfo.setMember(member);
-        workBookInfo.setName(requestedWorkBookName);
-        workBookInfo.setRecentSolveDate(null);
-        Long workBookInfoId = workBookInfoRepository.save(workBookInfo).getId();
+        WorkBook workBook = new WorkBook();
+        workBook.setMember(member);
+        workBook.setName(requestedWorkBookName);
+        workBook.setRecentSolveDate(null);
+        Long workBookInfoId = workBookRepository.save(workBook).getId();
         CreateWorkBookResponse createWorkBookResponse = new CreateWorkBookResponse();
-        createWorkBookResponse.setEncryptedWorkBookInfoId(encryptionService.encryptPrimaryKey(workBookInfoId));
+        createWorkBookResponse.setEncryptedWorkBookId(encryptionService.encryptPrimaryKey(workBookInfoId));
 
         return createWorkBookResponse;
 
@@ -63,13 +63,13 @@ public class WorkBookService {
         String userId = jwtUtility.getUserIdFromToken(token);
         Member member = localMemberRepository.findByUserId(userId).get().getMember();
 
-        List<WorkBookInfo> workBookInfos = workBookInfoRepository.findAllByMemberId(member.getId());
+        List<WorkBook> workBookInfos = workBookRepository.findAllByMemberId(member.getId());
 
         List<GetWorkBookInfoResponse> getWorkBookInfoResponses = new ArrayList<>();
-        for (WorkBookInfo workBookInfo : workBookInfos) {
+        for (WorkBook workBookInfo : workBookInfos) {
             GetWorkBookInfoResponse getWorkBookInfoResponse = new GetWorkBookInfoResponse();
 
-            getWorkBookInfoResponse.setEncryptedWorkBookInfoId(encryptionService.encryptPrimaryKey(workBookInfo.getId()));
+            getWorkBookInfoResponse.setEncryptedWorkBookId(encryptionService.encryptPrimaryKey(workBookInfo.getId()));
             getWorkBookInfoResponse.setName(workBookInfo.getName());
 
             getWorkBookInfoResponses.add(getWorkBookInfoResponse);
@@ -99,13 +99,13 @@ public class WorkBookService {
                 .toList();
 
 
-        List<WorkBookInfo> userWorkBooks = workBookInfoRepository.findAllByMemberId(member.getId());
+        List<WorkBook> userWorkBooks = workBookRepository.findAllByMemberId(member.getId());
 
         if (userWorkBooks.isEmpty()) {
             throw new IllegalArgumentException("사용자의 문제집이 존재하지 않습니다.");
         }
 
-        List<WorkBookInfo> workBooksToDelete = userWorkBooks.stream()
+        List<WorkBook> workBooksToDelete = userWorkBooks.stream()
                 .filter(workBook -> decryptedIds.contains(workBook.getId()))
                 .collect(Collectors.toList());
 
@@ -113,13 +113,13 @@ public class WorkBookService {
             throw new SecurityException("문제집 삭제에 오류가 발생했습니다.");
         }
 
-        for (WorkBookInfo workBookInfo : workBooksToDelete) {
-            List<WorkBook> workBooks = workBookRepository.findAllByWorkBookInfoId(workBookInfo.getId());
-            for (WorkBook workBook : workBooks) {
-                questionInfoByMemberRepository.deleteByMemberIdAndQuestionId(member.getId(), workBook.getId());
-                workBookRepository.delete(workBook);
+        for (WorkBook workBook : workBooksToDelete) {
+            List<WorkBookInfo> workBookInfos = workBookInfoRepository.findAllByWorkBookId(workBook.getId());
+            for (WorkBookInfo workBookInfo : workBookInfos) {
+                questionRepository.deleteByMemberIdAndQuestionInfoId(member.getId(), workBookInfo.getQuestionInfo().getId());
+                workBookInfoRepository.delete(workBookInfo);
             }
-            workBookInfoRepository.delete(workBookInfo);
+            workBookRepository.delete(workBook);
 
         }
 
@@ -132,22 +132,22 @@ public class WorkBookService {
 
         String requestedWorkBookName = request.getName();
 
-        List<WorkBookInfo> infos = workBookInfoRepository.findByName(requestedWorkBookName);
+        List<WorkBook> infos = workBookRepository.findByName(requestedWorkBookName);
         if (!infos.isEmpty()) {
             throw new IllegalArgumentException("이미 존재하는 문제집입니다.");
         }
 
-        Long workbookInfoId = encryptionService.decryptPrimaryKey(request.getEncryptedWorkBookInfoId());
-        WorkBookInfo workBookInfo = workBookInfoRepository.findById(workbookInfoId).orElseThrow(
+        Long workbookId = encryptionService.decryptPrimaryKey(request.getEncryptedWorkBookId());
+        WorkBook workBook = workBookRepository.findById(workbookId).orElseThrow(
                 () -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
-        Long requestedMemberId = workBookInfo.getMember().getId();
+        Long requestedMemberId = workBook.getMember().getId();
 
         // 삭제하려는 문제집이 해당 토큰의 멤버 문제집인지 검증
         if (!requestedMemberId.equals(member.getId())) {
             throw new SecurityException("문제집 업데이트에 오류가 발생했습니다.");
         }
 
-        workBookInfo.setName(requestedWorkBookName);
+        workBook.setName(requestedWorkBookName);
     }
 
 
