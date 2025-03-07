@@ -8,7 +8,7 @@ import java.sql.Timestamp;
 @NoArgsConstructor
 @AllArgsConstructor
 public class QuestionUpdateRequest {
-    private Long questionId;
+    private Long questionInfoId;
     private Boolean wrong;
     private Timestamp recentSolveTime;
 }

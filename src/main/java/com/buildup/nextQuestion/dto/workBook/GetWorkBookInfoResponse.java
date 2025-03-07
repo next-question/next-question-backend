@@ -8,6 +8,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class GetWorkBookInfoResponse {
-    private String encryptedWorkBookInfoId;
+    private String encryptedWorkBookId;
     private String name;
 }

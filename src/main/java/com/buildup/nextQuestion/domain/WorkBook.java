@@ -1,33 +1,27 @@
 package com.buildup.nextQuestion.domain;
 
-
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.sql.Timestamp;
+
 @Entity
-@Getter@Setter
-@NoArgsConstructor
+@Getter @Setter
 @Table(name = "work_book")
 public class WorkBook {
 
-    @Id@GeneratedValue
-    @Column(name="work_book_id")
+    @Id @GeneratedValue
+    @Column(name = "work_book_id")
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "question_id")
-    private Question question;
+    @JoinColumn(name = "member_id")
+    private Member member;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(name = "work_book_info_id")
-    private WorkBookInfo workBookInfo;
+    private String name;
 
-    public WorkBook(Question question, WorkBookInfo workBookInfo) {
-        this.question = question;
-        this.workBookInfo = workBookInfo;
+    private Timestamp recentSolveDate; // 문제집 최근 학습일
 
-    }
+
 }

@@ -7,6 +7,11 @@ import java.util.List;
 import java.util.Optional;
 
 public interface WorkBookInfoRepository extends JpaRepository<WorkBookInfo, Long> {
-    List<WorkBookInfo> findAllByMemberId(Long id);
-    List<WorkBookInfo> findByName(String name);
+
+
+    Optional<WorkBookInfo> findByWorkBookIdAndQuestionInfoId(Long workBookInfoId, Long questionId);
+
+    boolean existsByWorkBookIdAndQuestionInfoId(Long targetWorkbookId, Long id);
+
+    List<WorkBookInfo> findAllByWorkBookId(Long decryptedId);
 }

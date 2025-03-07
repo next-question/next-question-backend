@@ -8,6 +8,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UpdateWorkBookInfoRequest {
-    private String encryptedWorkBookInfoId;
+    private String encryptedWorkBookId;
     private String name;
 }

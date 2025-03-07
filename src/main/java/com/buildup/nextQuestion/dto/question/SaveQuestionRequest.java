@@ -10,6 +10,6 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class SaveQuestionRequest {
-    private List<String> encryptedQuestionIds;
-    private String encryptedWorkBookInfoId;
+    private List<String> encryptedQuestionInfoIds;
+    private String encryptedWorkBookId;
 }

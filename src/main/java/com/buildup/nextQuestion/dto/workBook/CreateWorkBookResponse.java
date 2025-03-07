@@ -8,5 +8,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CreateWorkBookResponse {
-    private String encryptedWorkBookInfoId;
+    private String encryptedWorkBookId;
 }
