@@ -8,5 +8,6 @@ import java.util.List;
 
 @Repository
 public interface QuestionInfoByMemberRepository  extends JpaRepository<QuestionInfoByMember, Long> {
+    void deleteByMemberIdAndQuestionId(Long memberId, Long questionId);
     public List<QuestionInfoByMember> findAllByMemberId(Long memberId);
 }
