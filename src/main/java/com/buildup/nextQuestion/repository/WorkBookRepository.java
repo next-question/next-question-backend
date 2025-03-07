@@ -3,6 +3,7 @@ package com.buildup.nextQuestion.repository;
 import com.buildup.nextQuestion.domain.WorkBook;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface WorkBookRepository extends JpaRepository<WorkBook, Long> {

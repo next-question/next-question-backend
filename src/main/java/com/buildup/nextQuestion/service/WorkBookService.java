@@ -1,6 +1,7 @@
 package com.buildup.nextQuestion.service;
 
 import com.buildup.nextQuestion.domain.Member;
+import com.buildup.nextQuestion.domain.WorkBook;
 import com.buildup.nextQuestion.domain.WorkBookInfo;
 import com.buildup.nextQuestion.dto.workBook.CreateWorkBookRequest;
 import com.buildup.nextQuestion.dto.workBook.CreateWorkBookResponse;
@@ -111,13 +112,17 @@ public class WorkBookService {
         if (workBooksToDelete.size() != decryptedIds.size()) {
             throw new SecurityException("문제집 삭제에 오류가 발생했습니다.");
         }
-        //해당 문제집의 문제 전부 삭제
-        for (Long decryptedId : decryptedIds)
-            workBookRepository.findAllByWorkBookInfoId(decryptedId)
-            workBookRepository.deleteAllByWorkBookInfoId(decryptedId);
 
-        //문제집도 삭제
-        workBookInfoRepository.deleteAll(workBooksToDelete);
+        for (WorkBookInfo workBookInfo : workBooksToDelete) {
+            List<WorkBook> workBooks = workBookRepository.findAllByWorkBookInfoId(workBookInfo.getId());
+            for (WorkBook workBook : workBooks) {
+                questionInfoByMemberRepository.deleteByMemberIdAndQuestionId(member.getId(), workBook.getId());
+                workBookRepository.delete(workBook);
+            }
+            workBookInfoRepository.delete(workBookInfo);
+
+        }
+
     }
 
     @Transactional
