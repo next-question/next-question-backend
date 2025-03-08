@@ -67,8 +67,8 @@ public class WorkBookService {
                 .orElseThrow(() -> new NoSuchElementException("해당 멤버를 찾을 수 없습니다."))
                 .getMember();
 
-        List<WorkBook> workBook = workBookRepository.findAllByMemberId(member.getId());
-        if (workBookInfos.isEmpty()) {
+        List<WorkBook> workBooks = workBookRepository.findAllByMemberId(member.getId());
+        if (workBooks.isEmpty()) {
             throw new NoSuchElementException("해당 사용자의 문제집이 존재하지 않습니다.");
         }
 
