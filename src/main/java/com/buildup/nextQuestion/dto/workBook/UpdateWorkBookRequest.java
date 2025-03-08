@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UpdateWorkBookInfoRequest {
+public class UpdateWorkBookRequest {
     private String encryptedWorkBookId;
     private String name;
 }

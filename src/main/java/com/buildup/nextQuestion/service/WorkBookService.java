@@ -1,19 +1,16 @@
 package com.buildup.nextQuestion.service;
 
-import com.buildup.nextQuestion.domain.Member;
-import com.buildup.nextQuestion.domain.WorkBookInfo;
-import com.buildup.nextQuestion.domain.WorkBook;
-import com.buildup.nextQuestion.dto.workBook.CreateWorkBookRequest;
-import com.buildup.nextQuestion.dto.workBook.CreateWorkBookResponse;
-import com.buildup.nextQuestion.dto.workBook.GetWorkBookInfoResponse;
-import com.buildup.nextQuestion.dto.workBook.UpdateWorkBookInfoRequest;
+import com.buildup.nextQuestion.domain.*;
+import com.buildup.nextQuestion.dto.workBook.*;
 import com.buildup.nextQuestion.repository.LocalMemberRepository;
 import com.buildup.nextQuestion.repository.QuestionRepository;
 import com.buildup.nextQuestion.repository.WorkBookRepository;
 import com.buildup.nextQuestion.repository.WorkBookInfoRepository;
 import com.buildup.nextQuestion.utility.JwtUtility;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -59,28 +56,67 @@ public class WorkBookService {
     }
 
     @Transactional
-    public List<GetWorkBookInfoResponse> getWorkBookInfo(String token) throws Exception {
+    public List<GetWorkBookResponse> getWorkBook(String token) throws Exception {
         String userId = jwtUtility.getUserIdFromToken(token);
         Member member = localMemberRepository.findByUserId(userId).get().getMember();
 
-        List<WorkBook> workBookInfos = workBookRepository.findAllByMemberId(member.getId());
+        List<WorkBook> workBooks = workBookRepository.findAllByMemberId(member.getId());
 
-        List<GetWorkBookInfoResponse> getWorkBookInfoResponses = new ArrayList<>();
-        for (WorkBook workBookInfo : workBookInfos) {
-            GetWorkBookInfoResponse getWorkBookInfoResponse = new GetWorkBookInfoResponse();
+        List<GetWorkBookResponse> getWorkBookRespons = new ArrayList<>();
+        for (WorkBook workBook : workBooks) {
+            GetWorkBookResponse getWorkBookResponse = new GetWorkBookResponse();
 
-            getWorkBookInfoResponse.setEncryptedWorkBookId(encryptionService.encryptPrimaryKey(workBookInfo.getId()));
-            getWorkBookInfoResponse.setName(workBookInfo.getName());
+            getWorkBookResponse.setEncryptedWorkBookId(encryptionService.encryptPrimaryKey(workBook.getId()));
+            getWorkBookResponse.setName(workBook.getName());
 
-            getWorkBookInfoResponses.add(getWorkBookInfoResponse);
+            getWorkBookRespons.add(getWorkBookResponse);
         }
 
-        return getWorkBookInfoResponses;
+        return getWorkBookRespons;
+    }
+
+    public List<GetQuestionsByWorkBookResponse> searchQuestionsByWorkBook(String token, GetQuestionsByWorkBookRequest request) throws Exception {
+        String userId = jwtUtility.getUserIdFromToken(token);
+
+        Member member = localMemberRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."))
+                .getMember();
+
+        Long workBookId = encryptionService.decryptPrimaryKey(request.getEncryptedWorkBookId());
+        //해당 문제집 찾기
+        WorkBook workBook = workBookRepository.findById(workBookId).orElseThrow(
+                () -> new IllegalArgumentException("문제집이 존재하지 않습니다."));
+
+        if (!workBookRepository.existsByIdAndMemberId(workBookId, member.getId())){
+            throw new AccessDeniedException("사용자의 문제집이 아닙니다.");
+        }
+        List<WorkBookInfo> workBookInfos = workBookInfoRepository.findAllByWorkBookId(workBookId);
+        List<GetQuestionsByWorkBookResponse> responses = new ArrayList<>();
+
+        for (WorkBookInfo workBookInfo : workBookInfos) {
+            QuestionInfo questionInfo = workBookInfo.getQuestionInfo();
+
+            GetQuestionsByWorkBookResponse response = new GetQuestionsByWorkBookResponse();
+            Question question = questionRepository.findByMemberIdAndQuestionInfoId(member.getId(), questionInfo.getId()).orElseThrow(
+                    () -> new EntityNotFoundException("문제 정보를 찾을 수 없습니다."));
+
+            response.setEncryptedQuestionId(encryptionService.encryptPrimaryKey(questionInfo.getId()));
+            response.setName(questionInfo.getName());
+            response.setType(questionInfo.getType());
+            response.setAnswer(questionInfo.getAnswer());
+            response.setOpt(questionInfo.getOption());
+            response.setCreateTime(questionInfo.getCreateTime());
+            response.setRecentSolveTime(question.getRecentSolveTime());
+
+            responses.add(response);
+        }
+        return responses;
+
     }
 
     @SneakyThrows
     @Transactional
-    public void deleteWorkBookInfo(String token, List<String> encryptedWorkBookInfoIds) throws Exception {
+    public void deleteWorkBook(String token, List<String> encryptedWorkBookIds) throws Exception {
 
         String userId = jwtUtility.getUserIdFromToken(token);
 
@@ -88,7 +124,7 @@ public class WorkBookService {
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."))
                 .getMember();
 
-        List<Long> decryptedIds = encryptedWorkBookInfoIds.stream()
+        List<Long> decryptedIds = encryptedWorkBookIds.stream()
                 .map(encryptedId -> {
                     try {
                         return encryptionService.decryptPrimaryKey(encryptedId);
@@ -126,7 +162,7 @@ public class WorkBookService {
     }
 
     @Transactional
-    public void updateWorkBookInfo(String token, UpdateWorkBookInfoRequest request) throws Exception {
+    public void updateWorkBook(String token, UpdateWorkBookRequest request) throws Exception {
         String userId = jwtUtility.getUserIdFromToken(token);
         Member member = localMemberRepository.findByUserId(userId).get().getMember();
 

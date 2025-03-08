@@ -1,9 +1,6 @@
 package com.buildup.nextQuestion.controller;
 
-import com.buildup.nextQuestion.dto.workBook.CreateWorkBookRequest;
-import com.buildup.nextQuestion.dto.workBook.CreateWorkBookResponse;
-import com.buildup.nextQuestion.dto.workBook.GetWorkBookInfoResponse;
-import com.buildup.nextQuestion.dto.workBook.UpdateWorkBookInfoRequest;
+import com.buildup.nextQuestion.dto.workBook.*;
 import com.buildup.nextQuestion.service.WorkBookService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -35,11 +32,11 @@ public class WorkBookController {
     }
 
     @GetMapping("public/workBook/search")
-    public ResponseEntity<?> getWorkBookInfo(
+    public ResponseEntity<?> searchWorkBook(
             @RequestHeader("Authorization") String token
     ) {
         try {
-            List<GetWorkBookInfoResponse> workBookInfos = workBookService.getWorkBookInfo(token);
+            List<GetWorkBookResponse> workBookInfos = workBookService.getWorkBook(token);
             return ResponseEntity.ok(workBookInfos);
         } catch (Exception e) {
 
@@ -52,13 +49,26 @@ public class WorkBookController {
         }
     }
 
+    @GetMapping("public/workBook/search/questions")
+    public ResponseEntity<?> searchQuestionsByWorkBook(
+            @RequestHeader("Authorization") String token,
+            @RequestBody GetQuestionsByWorkBookRequest request
+            ){
+        try{
+            List<GetQuestionsByWorkBookResponse> response = workBookService.searchQuestionsByWorkBook(token, request);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
     @DeleteMapping("public/workBook/delete")
     public ResponseEntity<String> deleteWorkBook(
             @RequestHeader("Authorization") String token,
             @RequestBody List<String> encryptedWorkBookInfoIds
     ){
         try{
-            workBookService.deleteWorkBookInfo(token, encryptedWorkBookInfoIds);
+            workBookService.deleteWorkBook(token, encryptedWorkBookInfoIds);
             return ResponseEntity.ok("문제집이 성공적으로 삭제되었습니다.");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
@@ -68,10 +78,10 @@ public class WorkBookController {
     @PatchMapping("public/workBook/update")
     public ResponseEntity<String> deleteWorkBook(
             @RequestHeader("Authorization") String token,
-            @RequestBody UpdateWorkBookInfoRequest updateWorkBookInfoRequest
+            @RequestBody UpdateWorkBookRequest updateWorkBookRequest
             ){
         try{
-            workBookService.updateWorkBookInfo(token, updateWorkBookInfoRequest);
+            workBookService.updateWorkBook(token, updateWorkBookRequest);
             return ResponseEntity.ok("문제집 명이 성공적으로 변경되었습니다.");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
