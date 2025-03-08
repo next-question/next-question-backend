@@ -1,9 +1,6 @@
 package com.buildup.nextQuestion.controller;
 
-import com.buildup.nextQuestion.dto.workBook.CreateWorkBookRequest;
-import com.buildup.nextQuestion.dto.workBook.CreateWorkBookResponse;
-import com.buildup.nextQuestion.dto.workBook.GetWorkBookInfoResponse;
-import com.buildup.nextQuestion.dto.workBook.UpdateWorkBookInfoRequest;
+import com.buildup.nextQuestion.dto.workBook.*;
 import com.buildup.nextQuestion.service.WorkBookService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,7 +18,7 @@ public class WorkBookController {
     private final WorkBookService workBookService;
 
 
-    @PostMapping("public/workBook/create")
+    @PostMapping("member/workBook/create")
     public ResponseEntity<?> createWorkBook(
             @RequestHeader("Authorization") String token,
             @RequestBody CreateWorkBookRequest request
@@ -30,29 +27,50 @@ public class WorkBookController {
             return ResponseEntity.ok(createWorkBookResponse);
     }
 
-    @GetMapping("public/workBook/search")
-    public ResponseEntity<?> getWorkBookInfo(
+    @GetMapping("member/workBooks/search")
+    public ResponseEntity<?> searchWorkBook(
             @RequestHeader("Authorization") String token
-    ) throws Exception {
-            List<GetWorkBookInfoResponse> workBookInfos = workBookService.getWorkBookInfo(token);
+    ) {
+        try {
+            List<GetWorkBookResponse> workBookInfos = workBookService.getWorkBook(token);
+
             return ResponseEntity.ok(workBookInfos);
     }
 
-    @DeleteMapping("public/workBook/delete")
+    @GetMapping("member/workBook/search/questions")
+    public ResponseEntity<?> searchQuestionsByWorkBook(
+            @RequestHeader("Authorization") String token,
+            @RequestBody GetQuestionsByWorkBookRequest request
+            ){
+        try{
+            List<GetQuestionsByWorkBookResponse> response = workBookService.searchQuestionsByWorkBook(token, request);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("member/workBooks/delete")
     public ResponseEntity<String> deleteWorkBook(
             @RequestHeader("Authorization") String token,
             @RequestBody List<String> encryptedWorkBookInfoIds
-    ) throws Exception {
-            workBookService.deleteWorkBookInfo(token, encryptedWorkBookInfoIds);
+
+    ){
+        try{
+            workBookService.deleteWorkBook(token, encryptedWorkBookInfoIds);
+
             return ResponseEntity.ok("문제집이 성공적으로 삭제되었습니다.");
     }
 
-    @PatchMapping("public/workBook/update")
+    @PatchMapping("member/workBook/update")
     public ResponseEntity<String> deleteWorkBook(
             @RequestHeader("Authorization") String token,
-            @RequestBody UpdateWorkBookInfoRequest updateWorkBookInfoRequest
-    ) throws Exception {
-            workBookService.updateWorkBookInfo(token, updateWorkBookInfoRequest);
+
+            @RequestBody UpdateWorkBookRequest updateWorkBookRequest
+            ){
+        try{
+            workBookService.updateWorkBook(token, updateWorkBookRequest);
+
             return ResponseEntity.ok("문제집 명이 성공적으로 변경되었습니다.");
     }
 

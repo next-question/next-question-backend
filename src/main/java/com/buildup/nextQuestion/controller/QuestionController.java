@@ -24,15 +24,17 @@ public class QuestionController {
     private final QuestionService questionService;
     private final FileService fileService;
 
+
     @PostMapping("public/question/upload")
     public ResponseEntity<?> uploadFileByGuest(@RequestPart MultipartFile file) throws IOException {
             fileService.validateFile(file);
+
 
             JsonNode jsonNode = questionGenerationFacade.generateQuestionByGuest(file);
             return ResponseEntity.ok(jsonNode);
     }
 
-    @PostMapping("member/question/upload")
+    @PostMapping("member/questions/upload")
     public ResponseEntity<?> uploadFileByMember(
             @RequestHeader("Authorization") String token,
             @ModelAttribute UploadFileByMemberReqeust uploadFileByMemberReqeust
@@ -46,7 +48,7 @@ public class QuestionController {
             return ResponseEntity.ok(encryptedQeustionIds);
     }
 
-    @PostMapping("member/question/save")
+    @PostMapping("member/questions/save")
     public ResponseEntity<?> saveQuestion(
             @RequestHeader("Authorization") String token,
             @RequestBody SaveQuestionRequest saveQuestionRequest) throws Exception {
@@ -55,7 +57,7 @@ public class QuestionController {
         return ResponseEntity.ok("문제를 성공적으로 저장했습니다.");
     }
 
-    @GetMapping("member/question/search")
+    @GetMapping("member/questions/search")
     public ResponseEntity<?> saveQuestion(
             @RequestHeader("Authorization") String token) throws Exception
     {
@@ -63,7 +65,7 @@ public class QuestionController {
             return ResponseEntity.ok(response);
     }
 
-    @PostMapping("member/question/delete")
+    @PostMapping("member/questions/delete")
     public ResponseEntity<?> deleteQuestion(
             @RequestHeader("Authorization") String token,
             @RequestBody List<String> encryptedQuestionInfoIds
@@ -74,7 +76,7 @@ public class QuestionController {
     }
 
 
-    @PostMapping("member/question/move")
+    @PostMapping("member/questions/move")
     public ResponseEntity<?> deleteQuestion(
             @RequestHeader("Authorization") String token,
             @RequestBody MoveQuestionRequest request

@@ -2,6 +2,7 @@ package com.buildup.nextQuestion.controller;
 
 
 import com.buildup.nextQuestion.domain.LocalMember;
+import com.buildup.nextQuestion.dto.member.FindMembersResponse;
 import com.buildup.nextQuestion.dto.member.LoginRequest;
 import com.buildup.nextQuestion.dto.member.LoginResponse;
 import com.buildup.nextQuestion.dto.member.RegistRequest;
@@ -10,10 +11,11 @@ import com.buildup.nextQuestion.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
 
 @RestController
 @RequiredArgsConstructor
@@ -33,4 +35,20 @@ public class MemberController {
             LoginResponse response = memberService.login(loginDTOrequest);
             return ResponseEntity.ok(response);
     }
+
+    @GetMapping("public/members/search")
+    public ResponseEntity<?> findAllMember(
+            @RequestHeader("Authorization") String token) {
+        try {
+            List<FindMembersResponse> response = memberService.findMembers();
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("서버 오류가 발생했습니다.");
+        }
+    }
+
+
 }
+
