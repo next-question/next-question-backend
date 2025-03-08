@@ -21,7 +21,7 @@ public class QuestionController {
     private final QuestionGenerationFacade questionGenerationFacade;
     private final QuestionService questionService;
 
-    @PostMapping("public/question/upload")
+    @PostMapping("public/questions/upload")
     public ResponseEntity<?> uploadFileByGuest(
             @RequestPart MultipartFile file
     ) {
@@ -38,7 +38,7 @@ public class QuestionController {
         }
     }
 
-    @PostMapping("member/question/upload")
+    @PostMapping("member/questions/upload")
     public ResponseEntity<?> uploadFileByMember(
             @RequestHeader("Authorization") String token,
             @ModelAttribute UploadFileByMemberReqeust uploadFileByMemberReqeust
@@ -59,7 +59,7 @@ public class QuestionController {
         }
     }
 
-    @PostMapping("member/question/save")
+    @PostMapping("member/questions/save")
     public ResponseEntity<?> saveQuestion(
             @RequestHeader("Authorization") String token,
             @RequestBody SaveQuestionRequest saveQuestionRequest) throws Exception {
@@ -73,7 +73,7 @@ public class QuestionController {
 //        }
     }
 
-    @GetMapping("member/question/search")
+    @GetMapping("member/questions/search")
     public ResponseEntity<?> saveQuestion(
             @RequestHeader("Authorization") String token)
     {
@@ -87,7 +87,7 @@ public class QuestionController {
         }
     }
 
-    @PostMapping("member/question/delete")
+    @PostMapping("member/questions/delete")
     public ResponseEntity<?> deleteQuestion(
             @RequestHeader("Authorization") String token,
             @RequestBody List<String> encryptedQuestionInfoIds
@@ -104,7 +104,7 @@ public class QuestionController {
     }
 
 
-    @PostMapping("member/question/move")
+    @PostMapping("member/questions/move")
     public ResponseEntity<?> deleteQuestion(
             @RequestHeader("Authorization") String token,
             @RequestBody MoveQuestionRequest request
