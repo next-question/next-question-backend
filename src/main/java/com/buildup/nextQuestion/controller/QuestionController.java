@@ -1,7 +1,7 @@
 package com.buildup.nextQuestion.controller;
 import com.buildup.nextQuestion.dto.question.MoveQuestionRequest;
 import com.buildup.nextQuestion.dto.question.SaveQuestionRequest;
-import com.buildup.nextQuestion.dto.question.SearchQuestionByMemberResponse;
+import com.buildup.nextQuestion.dto.question.FindQuestionByMemberResponse;
 import com.buildup.nextQuestion.dto.question.UploadFileByMemberReqeust;
 import com.buildup.nextQuestion.service.QuestionGenerationFacade;
 import com.buildup.nextQuestion.service.QuestionService;
@@ -78,7 +78,7 @@ public class QuestionController {
             @RequestHeader("Authorization") String token)
     {
         try {
-            List<SearchQuestionByMemberResponse> response = questionService.searchQuestionByMember(token);
+            List<FindQuestionByMemberResponse> response = questionService.findQuestionByMember(token);
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
@@ -87,7 +87,7 @@ public class QuestionController {
         }
     }
 
-    @PostMapping("member/questions/delete")
+    @DeleteMapping("member/questions/delete")
     public ResponseEntity<?> deleteQuestion(
             @RequestHeader("Authorization") String token,
             @RequestBody List<String> encryptedQuestionInfoIds
@@ -119,5 +119,6 @@ public class QuestionController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
+
 
 }

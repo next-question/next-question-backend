@@ -1,9 +1,8 @@
 package com.buildup.nextQuestion.service;
 
 import com.buildup.nextQuestion.domain.*;
-import com.buildup.nextQuestion.dto.question.MoveQuestionRequest;
-import com.buildup.nextQuestion.dto.question.SaveQuestionRequest;
-import com.buildup.nextQuestion.dto.question.SearchQuestionByMemberResponse;
+import com.buildup.nextQuestion.domain.enums.QuestionType;
+import com.buildup.nextQuestion.dto.question.*;
 import com.buildup.nextQuestion.repository.*;
 import com.buildup.nextQuestion.utility.JwtUtility;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -14,8 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.file.AccessDeniedException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -89,29 +87,29 @@ public class QuestionService {
     }
 
     @Transactional
-    public List<SearchQuestionByMemberResponse> searchQuestionByMember(String token) throws Exception {
+    public List<FindQuestionByMemberResponse> findQuestionByMember(String token) throws Exception {
         String userId = jwtUtility.getUserIdFromToken(token);
         Member member = localMemberRepository.findByUserId(userId).orElseThrow(() -> new IllegalArgumentException("해당 멤버를 찾을 수 없습니다.")).getMember();
 
         List<Question> questionInfos = questionRepository.findAllByMemberId(member.getId());
 
-        List<SearchQuestionByMemberResponse> response = new ArrayList<>();
+        List<FindQuestionByMemberResponse> response = new ArrayList<>();
         for (Question questionInfo : questionInfos) {
             QuestionInfo question = questionInfo.getQuestionInfo();
             if (!questionInfo.getDel()) {
-                SearchQuestionByMemberResponse searchQuestionByMemberResponse = new SearchQuestionByMemberResponse();
+                FindQuestionByMemberResponse findQuestionByMemberResponse = new FindQuestionByMemberResponse();
 
-                searchQuestionByMemberResponse.setEncryptedQuestionId(
+                findQuestionByMemberResponse.setEncryptedQuestionId(
                         encryptionService.encryptPrimaryKey(questionInfo.getId())
                 );
-                searchQuestionByMemberResponse.setName(question.getName());
-                searchQuestionByMemberResponse.setType(question.getType());
-                searchQuestionByMemberResponse.setAnswer(question.getAnswer());
-                searchQuestionByMemberResponse.setOpt(question.getOption());
-                searchQuestionByMemberResponse.setCreateTime(question.getCreateTime());
-                searchQuestionByMemberResponse.setRecentSolveTime(questionInfo.getRecentSolveTime());
+                findQuestionByMemberResponse.setName(question.getName());
+                findQuestionByMemberResponse.setType(question.getType());
+                findQuestionByMemberResponse.setAnswer(question.getAnswer());
+                findQuestionByMemberResponse.setOpt(question.getOption());
+                findQuestionByMemberResponse.setCreateTime(question.getCreateTime());
+                findQuestionByMemberResponse.setRecentSolveTime(questionInfo.getRecentSolveTime());
 
-                response.add(searchQuestionByMemberResponse);
+                response.add(findQuestionByMemberResponse);
             }
         }
         return response;
@@ -193,8 +191,112 @@ public class QuestionService {
         }
     }
 
+    public List<FindQuestionsByNormalExamResponse> findQuestionsByNormalExam(String token, FindQuestionByNormalExamRequest request) throws Exception {
+        String userId = jwtUtility.getUserIdFromToken(token);
 
+        // 사용자 조회
+        Member member = localMemberRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 멤버를 찾을 수 없습니다."))
+                .getMember();
 
+        Long workBookId = encryptionService.decryptPrimaryKey(request.getEncryptedWorkBookId());
 
+        if (!workBookRepository.existsByIdAndMemberId(workBookId, member.getId())) {
+            throw new AccessDeniedException("사용자가 소유한 문제집이 아닙니다.");
+        }
+
+        List<WorkBookInfo> workBookInfos = workBookInfoRepository.findAllByWorkBookId(workBookId);
+        if (workBookInfos.size() < request.getOptions().getCount()) {
+            throw new IllegalArgumentException("문제집의 문제 수가 선택한 수보다 적습니다.");
+        }
+
+        // 문제 유형별 분류
+        List<QuestionInfo> oxList = new ArrayList<>();
+        List<QuestionInfo> multipleList = new ArrayList<>();
+        List<QuestionInfo> blankList = new ArrayList<>();
+
+        for (WorkBookInfo workBookInfo : workBookInfos) {
+            QuestionInfo questionInfo = workBookInfo.getQuestionInfo();
+            if (questionInfo.getType().equals(QuestionType.OX)) {
+                oxList.add(questionInfo);
+            } else if (questionInfo.getType().equals(QuestionType.MULTIPLE_CHOICE)) {
+                multipleList.add(questionInfo);
+            } else if (questionInfo.getType().equals(QuestionType.FILL_IN_THE_BLANK)) {
+                blankList.add(questionInfo);
+            }
+        }
+
+        // 사용자 선택 옵션 확인
+        int totalCount = request.getOptions().getCount();
+        Map<QuestionType, List<QuestionInfo>> selectedTypes = new HashMap<>();
+
+        if (request.getOptions().isOx() && !oxList.isEmpty()) selectedTypes.put(QuestionType.OX, oxList);
+        if (request.getOptions().isMultiple() && !multipleList.isEmpty()) selectedTypes.put(QuestionType.MULTIPLE_CHOICE, multipleList);
+        if (request.getOptions().isBlank() && !blankList.isEmpty()) selectedTypes.put(QuestionType.FILL_IN_THE_BLANK, blankList);
+
+        int selectedTypeCount = selectedTypes.size();
+        if (selectedTypeCount == 0) {
+            throw new IllegalArgumentException("선택한 문제 유형의 문제가 존재하지 않습니다.");
+        }
+
+        // 균등 분배할 개수
+        int perTypeCount = totalCount / selectedTypeCount;
+        int remainder = totalCount % selectedTypeCount;
+
+        Map<QuestionType, Integer> questionDistribution = new HashMap<>();
+        for (QuestionType type : selectedTypes.keySet()) {
+            questionDistribution.put(type, perTypeCount + (remainder-- > 0 ? 1 : 0));
+        }
+
+        // 부족한 유형을 모두 체크하여 리스트로 저장
+        List<String> missingTypes = new ArrayList<>();
+        for (Map.Entry<QuestionType, Integer> entry : questionDistribution.entrySet()) {
+            QuestionType type = entry.getKey();
+            List<QuestionInfo> availableQuestions = selectedTypes.get(type);
+            int requiredCount = entry.getValue();
+
+            if (availableQuestions.size() < requiredCount) {
+                missingTypes.add(type + " 유형의 문제가 부족합니다. (필요: " + requiredCount + "개, 존재: " + availableQuestions.size() + "개)");
+            }
+        }
+
+        // 부족한 유형이 하나라도 있다면 에러 메시지 반환
+        if (!missingTypes.isEmpty()) {
+            throw new IllegalArgumentException("요청한 문제를 출제할 수 없습니다.\n" + String.join("\n", missingTypes));
+        }
+
+        // 문제 선택
+        List<QuestionInfo> finalSelected = new ArrayList<>();
+        for (Map.Entry<QuestionType, Integer> entry : questionDistribution.entrySet()) {
+            QuestionType type = entry.getKey();
+            List<QuestionInfo> availableQuestions = selectedTypes.get(type);
+            finalSelected.addAll(selectRandomQuestions(availableQuestions, entry.getValue()));
+        }
+
+        // 응답 생성
+        List<FindQuestionsByNormalExamResponse> response = new ArrayList<>();
+        for (QuestionInfo questionInfo : finalSelected) {
+            Question question = questionRepository.findByMemberIdAndQuestionInfoIdAndDelFalse(
+                    member.getId(), questionInfo.getId()).orElseThrow(() -> new IllegalArgumentException("해당 문제를 찾을 수 없습니다."));
+
+            FindQuestionsByNormalExamResponse selectedQuestion = new FindQuestionsByNormalExamResponse();
+            selectedQuestion.setEncryptedQuestionId(encryptionService.encryptPrimaryKey(question.getId()));
+            selectedQuestion.setName(questionInfo.getName());
+            selectedQuestion.setType(questionInfo.getType());
+            selectedQuestion.setAnswer(questionInfo.getAnswer());
+            selectedQuestion.setOpt(questionInfo.getOption());
+            selectedQuestion.setWrong(question.getWrong());
+            selectedQuestion.setRecentSolveTime(question.getRecentSolveTime());
+
+            response.add(selectedQuestion);
+        }
+
+        return response;
+    }
+
+    private List<QuestionInfo> selectRandomQuestions(List<QuestionInfo> questionList, int count) {
+        Collections.shuffle(questionList);
+        return questionList.subList(0, Math.min(count, questionList.size()));
+    }
 }
 
