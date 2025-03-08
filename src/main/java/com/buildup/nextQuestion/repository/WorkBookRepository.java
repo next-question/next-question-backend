@@ -8,4 +8,5 @@ import java.util.List;
 public interface WorkBookRepository extends JpaRepository<WorkBook, Long> {
     List<WorkBook> findAllByMemberId(Long id);
     List<WorkBook> findByName(String name);
+    boolean existsByIdAndMemberId(Long id, Long memberId);
 }
