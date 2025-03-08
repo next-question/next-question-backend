@@ -7,10 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class NormalExamOption {
-    private int count;
-    private boolean random;
-    private boolean ox;
-    private boolean multiple;
-    private boolean blank;
+public class FindQuestionByNormalExamRequest {
+    private String encryptedWorkBookId;
+    private NormalExamOption options;
 }

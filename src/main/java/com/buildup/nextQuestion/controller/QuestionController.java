@@ -60,11 +60,11 @@ public class QuestionController {
     public ResponseEntity<?> saveQuestion(
             @RequestHeader("Authorization") String token) throws Exception
     {
-            List<FindQuestionByMemberResponse> response = questionService.searchQuestionByMember(token);
+            List<FindQuestionByMemberResponse> response = questionService.findQuestionByMember(token);
             return ResponseEntity.ok(response);
     }
 
-    @PostMapping("member/questions/delete")
+    @DeleteMapping("member/questions/delete")
     public ResponseEntity<?> deleteQuestion(
             @RequestHeader("Authorization") String token,
             @RequestBody List<String> encryptedQuestionInfoIds

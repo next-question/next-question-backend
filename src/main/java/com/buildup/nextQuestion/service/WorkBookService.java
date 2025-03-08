@@ -108,18 +108,18 @@ public class WorkBookService {
             QuestionInfo questionInfo = workBookInfo.getQuestionInfo();
 
             GetQuestionsByWorkBookResponse response = new GetQuestionsByWorkBookResponse();
-            Question question = questionRepository.findByMemberIdAndQuestionInfoId(member.getId(), questionInfo.getId()).orElseThrow(
-                    () -> new EntityNotFoundException("문제 정보를 찾을 수 없습니다."));
+            Question question = questionRepository.findByMemberIdAndQuestionInfoId(member.getId(), questionInfo.getId()).get();
+            if (!question.getDel()) {
+                response.setEncryptedQuestionId(encryptionService.encryptPrimaryKey(questionInfo.getId()));
+                response.setName(questionInfo.getName());
+                response.setType(questionInfo.getType());
+                response.setAnswer(questionInfo.getAnswer());
+                response.setOpt(questionInfo.getOption());
+                response.setCreateTime(questionInfo.getCreateTime());
+                response.setRecentSolveTime(question.getRecentSolveTime());
 
-            response.setEncryptedQuestionId(encryptionService.encryptPrimaryKey(questionInfo.getId()));
-            response.setName(questionInfo.getName());
-            response.setType(questionInfo.getType());
-            response.setAnswer(questionInfo.getAnswer());
-            response.setOpt(questionInfo.getOption());
-            response.setCreateTime(questionInfo.getCreateTime());
-            response.setRecentSolveTime(question.getRecentSolveTime());
-
-            responses.add(response);
+                responses.add(response);
+            }
         }
         return responses;
 

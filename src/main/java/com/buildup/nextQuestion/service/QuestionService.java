@@ -6,6 +6,8 @@ import com.buildup.nextQuestion.dto.question.SaveQuestionRequest;
 import com.buildup.nextQuestion.dto.question.FindQuestionByMemberResponse;
 import com.buildup.nextQuestion.exception.DuplicateResourceException;
 import com.buildup.nextQuestion.exception.AccessDeniedException;
+import com.buildup.nextQuestion.domain.enums.QuestionType;
+import com.buildup.nextQuestion.dto.question.*;
 import com.buildup.nextQuestion.repository.*;
 import com.buildup.nextQuestion.utility.JwtUtility;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -15,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -91,7 +94,7 @@ public class QuestionService {
     }
 
     @Transactional
-    public List<FindQuestionByMemberResponse> searchQuestionByMember(String token) throws Exception {
+    public List<FindQuestionByMemberResponse> findQuestionByMember(String token) throws Exception {
         String userId = jwtUtility.getUserIdFromToken(token);
         Member member = localMemberRepository.findByUserId(userId).orElseThrow(() -> new NoSuchElementException("해당 멤버를 찾을 수 없습니다.")).getMember();
 
@@ -120,30 +123,30 @@ public class QuestionService {
     }
 
     @Transactional
-    public void deleteQuestion(String token, List<String> encryptedQuestionInfoIds) throws Exception {
+    public void deleteQuestion(String token, List<String> encryptedQuestionIds) throws Exception {
         String userId = jwtUtility.getUserIdFromToken(token);
         Member member = localMemberRepository.findByUserId(userId)
                 .orElseThrow(() -> new NoSuchElementException("해당 멤버를 찾을 수 없습니다."))
                 .getMember();
 
-        if (encryptedQuestionInfoIds == null || encryptedQuestionInfoIds.isEmpty()) {
+        if (encryptedQuestionIds == null || encryptedQuestionIds.isEmpty()) {
             throw new NoSuchElementException("삭제할 문제가 없습니다.");
         }
 
-        for (String encryptedQuestionInfoId : encryptedQuestionInfoIds) {
-            Long questionInfoId = encryptionService.decryptPrimaryKey(encryptedQuestionInfoId);
+        for (String encryptedQuestionId : encryptedQuestionIds) {
+            Long questionId = encryptionService.decryptPrimaryKey(encryptedQuestionId);
 
 
-            Question questionInfo = questionRepository.findById(questionInfoId)
+            Question question = questionRepository.findById(questionId)
                     .orElseThrow(() -> new NoSuchElementException("해당 문제를 찾을 수 없습니다."));
 
             // 해당 사용자의 문제인지 검증 (소유자가 아니면 예외 발생)
-            if (!questionInfo.getMember().getId().equals(member.getId())) {
+            if (!question.getMember().getId().equals(member.getId())) {
                 throw new AccessDeniedException("해당 문제를 삭제할 권한이 없습니다.");
             }
 
             // 삭제 처리
-            questionInfo.setDel(true);
+            question.setDel(true);
         }
     }
 
