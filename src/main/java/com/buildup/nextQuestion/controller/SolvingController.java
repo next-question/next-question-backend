@@ -2,16 +2,12 @@ package com.buildup.nextQuestion.controller;
 
 import com.buildup.nextQuestion.dto.question.FindQuestionByNormalExamRequest;
 import com.buildup.nextQuestion.dto.question.FindQuestionsByNormalExamResponse;
-import com.buildup.nextQuestion.dto.workBook.GetQuestionsByWorkBookRequest;
-import com.buildup.nextQuestion.dto.workBook.GetQuestionsByWorkBookResponse;
-import com.buildup.nextQuestion.service.QuestionService;
+import com.buildup.nextQuestion.dto.solving.SaveHistoryByNormalExamRequest;
+import com.buildup.nextQuestion.service.SolvingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -20,7 +16,7 @@ import java.util.List;
 public class SolvingController {
 
 
-    private final QuestionService questionService;
+    private final SolvingService solvingService;
 
     @GetMapping("/solving/normal/search")
     public ResponseEntity<?> searchQuestionsByWorkBook(
@@ -28,8 +24,21 @@ public class SolvingController {
             @RequestBody FindQuestionByNormalExamRequest request
     ){
         try{
-            List<FindQuestionsByNormalExamResponse> response = questionService.findQuestionsByNormalExam(token, request);
+            List<FindQuestionsByNormalExamResponse> response = solvingService.findQuestionsByNormalExam(token, request);
             return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/solving/normal/save")
+    public ResponseEntity<?> saveHistoryByNormalExam(
+            @RequestHeader("Authorization") String token,
+            @RequestBody SaveHistoryByNormalExamRequest request
+    ){
+        try{
+            solvingService.saveHistoryByNormalExam(token, request);
+            return ResponseEntity.ok("문제 풀이 결과를 저장했습니다.");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
