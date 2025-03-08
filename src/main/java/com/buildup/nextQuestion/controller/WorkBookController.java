@@ -22,13 +22,9 @@ public class WorkBookController {
     public ResponseEntity<?> createWorkBook(
             @RequestHeader("Authorization") String token,
             @RequestBody CreateWorkBookRequest request
-    ){
-        try{
+    ) throws Exception {
             CreateWorkBookResponse createWorkBookResponse = workBookService.createWorkBook(token, request);
             return ResponseEntity.ok(createWorkBookResponse);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-        }
     }
 
     @GetMapping("member/workBooks/search")
@@ -37,16 +33,8 @@ public class WorkBookController {
     ) {
         try {
             List<GetWorkBookResponse> workBookInfos = workBookService.getWorkBook(token);
+
             return ResponseEntity.ok(workBookInfos);
-        } catch (Exception e) {
-
-            Map<String, String> errorResponse = new HashMap<>();
-            errorResponse.put("error", "워크북 정보를 가져오는 중 오류 발생" + e.getMessage());
-
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(errorResponse);
-        }
     }
 
     @GetMapping("member/workBook/search/questions")
@@ -66,26 +54,24 @@ public class WorkBookController {
     public ResponseEntity<String> deleteWorkBook(
             @RequestHeader("Authorization") String token,
             @RequestBody List<String> encryptedWorkBookInfoIds
+
     ){
         try{
             workBookService.deleteWorkBook(token, encryptedWorkBookInfoIds);
+
             return ResponseEntity.ok("문제집이 성공적으로 삭제되었습니다.");
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-        }
     }
 
     @PatchMapping("member/workBook/update")
     public ResponseEntity<String> deleteWorkBook(
             @RequestHeader("Authorization") String token,
+
             @RequestBody UpdateWorkBookRequest updateWorkBookRequest
             ){
         try{
             workBookService.updateWorkBook(token, updateWorkBookRequest);
+
             return ResponseEntity.ok("문제집 명이 성공적으로 변경되었습니다.");
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-        }
     }
 
 }
