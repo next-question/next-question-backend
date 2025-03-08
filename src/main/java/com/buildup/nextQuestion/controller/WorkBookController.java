@@ -18,7 +18,7 @@ public class WorkBookController {
     private final WorkBookService workBookService;
 
 
-    @PostMapping("public/workBook/create")
+    @PostMapping("member/workBook/create")
     public ResponseEntity<?> createWorkBook(
             @RequestHeader("Authorization") String token,
             @RequestBody CreateWorkBookRequest request
@@ -31,7 +31,7 @@ public class WorkBookController {
         }
     }
 
-    @GetMapping("public/workBook/search")
+    @GetMapping("member/workBooks/search")
     public ResponseEntity<?> searchWorkBook(
             @RequestHeader("Authorization") String token
     ) {
@@ -49,7 +49,7 @@ public class WorkBookController {
         }
     }
 
-    @GetMapping("public/workBook/search/questions")
+    @GetMapping("member/workBook/search/questions")
     public ResponseEntity<?> searchQuestionsByWorkBook(
             @RequestHeader("Authorization") String token,
             @RequestBody GetQuestionsByWorkBookRequest request
@@ -62,7 +62,7 @@ public class WorkBookController {
         }
     }
 
-    @DeleteMapping("public/workBook/delete")
+    @DeleteMapping("member/workBooks/delete")
     public ResponseEntity<String> deleteWorkBook(
             @RequestHeader("Authorization") String token,
             @RequestBody List<String> encryptedWorkBookInfoIds
@@ -75,7 +75,7 @@ public class WorkBookController {
         }
     }
 
-    @PatchMapping("public/workBook/update")
+    @PatchMapping("member/workBook/update")
     public ResponseEntity<String> deleteWorkBook(
             @RequestHeader("Authorization") String token,
             @RequestBody UpdateWorkBookRequest updateWorkBookRequest

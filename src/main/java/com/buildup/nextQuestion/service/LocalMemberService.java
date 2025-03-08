@@ -31,6 +31,9 @@ public class LocalMemberService {
         if (localMemberRepository.existsByUserId(userId) || localMemberRepository.existsByEmail(email)) {
             throw new IllegalArgumentException("이미 존재하는 아이디 또는 이메일입니다.");
         }
+        if(memberRepository.existsByNickname(nickname)) {
+            throw new IllegalArgumentException("동일한 별명을 사용할 수 없습니다.");
+        }
 
         // Member 객체 생성
         Member member = new Member(nickname, LoginType.LOCAL);
