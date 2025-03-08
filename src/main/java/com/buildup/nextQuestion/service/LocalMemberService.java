@@ -4,6 +4,7 @@ import com.buildup.nextQuestion.domain.LocalMember;
 import com.buildup.nextQuestion.domain.Member;
 import com.buildup.nextQuestion.domain.enums.LoginType;
 import com.buildup.nextQuestion.dto.member.RegistRequest;
+import com.buildup.nextQuestion.exception.DuplicateResourceException;
 import com.buildup.nextQuestion.repository.LocalMemberRepository;
 import com.buildup.nextQuestion.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +30,7 @@ public class LocalMemberService {
         String nickname = registDTORequest.getNickname();
         // 중복 체크
         if (localMemberRepository.existsByUserId(userId) || localMemberRepository.existsByEmail(email)) {
-            throw new IllegalArgumentException("이미 존재하는 아이디 또는 이메일입니다.");
+            throw new DuplicateResourceException("이미 존재하는 아이디 또는 이메일입니다.");
         }
         if(memberRepository.existsByNickname(nickname)) {
             throw new IllegalArgumentException("동일한 별명을 사용할 수 없습니다.");
