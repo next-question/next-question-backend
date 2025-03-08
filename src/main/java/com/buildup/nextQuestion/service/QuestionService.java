@@ -116,30 +116,30 @@ public class QuestionService {
     }
 
     @Transactional
-    public void deleteQuestion(String token, List<String> encryptedQuestionInfoIds) throws Exception {
+    public void deleteQuestion(String token, List<String> encryptedQuestionIds) throws Exception {
         String userId = jwtUtility.getUserIdFromToken(token);
         Member member = localMemberRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 멤버를 찾을 수 없습니다."))
                 .getMember();
 
-        if (encryptedQuestionInfoIds == null || encryptedQuestionInfoIds.isEmpty()) {
+        if (encryptedQuestionIds == null || encryptedQuestionIds.isEmpty()) {
             throw new IllegalArgumentException("삭제할 문제가 없습니다.");
         }
 
-        for (String encryptedQuestionInfoId : encryptedQuestionInfoIds) {
-            Long questionInfoId = encryptionService.decryptPrimaryKey(encryptedQuestionInfoId);
+        for (String encryptedQuestionId : encryptedQuestionIds) {
+            Long questionId = encryptionService.decryptPrimaryKey(encryptedQuestionId);
 
 
-            Question questionInfo = questionRepository.findById(questionInfoId)
+            Question question = questionRepository.findByMemberIdAndQuestionInfoIdAndDelFalse(member.getId(), questionId)
                     .orElseThrow(() -> new IllegalArgumentException("해당 문제를 찾을 수 없습니다."));
 
             // 해당 사용자의 문제인지 검증 (소유자가 아니면 예외 발생)
-            if (!questionInfo.getMember().getId().equals(member.getId())) {
+            if (!question.getMember().getId().equals(member.getId())) {
                 throw new IllegalAccessException("해당 문제를 삭제할 권한이 없습니다.");
             }
 
             // 삭제 처리
-            questionInfo.setDel(true);
+            question.setDel(true);
         }
     }
 
