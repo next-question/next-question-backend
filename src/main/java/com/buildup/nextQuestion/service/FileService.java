@@ -19,4 +19,14 @@ public class FileService {
         }
     }
 
+    public void validateFile(MultipartFile file){
+        if (file == null) {
+            throw new IllegalArgumentException("PDF file is required.");
+        }
+
+        // 파일 형식이 PDF가 아닌 경우
+        if (!file.getOriginalFilename().endsWith(".pdf")) {
+            throw new IllegalArgumentException("Only PDF files are allowed.");
+        }
+    }
 }

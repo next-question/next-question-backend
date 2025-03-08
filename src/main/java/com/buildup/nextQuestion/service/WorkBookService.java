@@ -7,6 +7,7 @@ import com.buildup.nextQuestion.dto.workBook.CreateWorkBookRequest;
 import com.buildup.nextQuestion.dto.workBook.CreateWorkBookResponse;
 import com.buildup.nextQuestion.dto.workBook.GetWorkBookInfoResponse;
 import com.buildup.nextQuestion.dto.workBook.UpdateWorkBookInfoRequest;
+import com.buildup.nextQuestion.exception.DuplicateResourceException;
 import com.buildup.nextQuestion.repository.LocalMemberRepository;
 import com.buildup.nextQuestion.repository.QuestionRepository;
 import com.buildup.nextQuestion.repository.WorkBookRepository;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 
@@ -38,12 +40,14 @@ public class WorkBookService {
     public CreateWorkBookResponse createWorkBook(String token, CreateWorkBookRequest request) throws Exception {
 
         String userId = jwtUtility.getUserIdFromToken(token);
-        Member member = localMemberRepository.findByUserId(userId).get().getMember();
+        Member member = localMemberRepository.findByUserId(userId)
+                .orElseThrow(() -> new NoSuchElementException("해당 멤버를 찾을 수 없습니다."))
+                .getMember();
         String requestedWorkBookName = request.getWorkBookName();
 
         List<WorkBook> infos = workBookRepository.findByName(requestedWorkBookName);
         if (!infos.isEmpty()) {
-            throw new IllegalArgumentException("이미 존재하는 문제집입니다.");
+            throw new DuplicateResourceException("이미 존재하는 문제집입니다.");
         }
 
         WorkBook workBook = new WorkBook();
@@ -61,9 +65,14 @@ public class WorkBookService {
     @Transactional
     public List<GetWorkBookInfoResponse> getWorkBookInfo(String token) throws Exception {
         String userId = jwtUtility.getUserIdFromToken(token);
-        Member member = localMemberRepository.findByUserId(userId).get().getMember();
+        Member member = localMemberRepository.findByUserId(userId)
+                .orElseThrow(() -> new NoSuchElementException("해당 멤버를 찾을 수 없습니다."))
+                .getMember();
 
         List<WorkBook> workBookInfos = workBookRepository.findAllByMemberId(member.getId());
+        if (workBookInfos.isEmpty()) {
+            throw new NoSuchElementException("해당 사용자의 문제집이 존재하지 않습니다.");
+        }
 
         List<GetWorkBookInfoResponse> getWorkBookInfoResponses = new ArrayList<>();
         for (WorkBook workBookInfo : workBookInfos) {
@@ -85,7 +94,7 @@ public class WorkBookService {
         String userId = jwtUtility.getUserIdFromToken(token);
 
         Member member = localMemberRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."))
+                .orElseThrow(() -> new NoSuchElementException("사용자를 찾을 수 없습니다."))
                 .getMember();
 
         List<Long> decryptedIds = encryptedWorkBookInfoIds.stream()
@@ -102,7 +111,7 @@ public class WorkBookService {
         List<WorkBook> userWorkBooks = workBookRepository.findAllByMemberId(member.getId());
 
         if (userWorkBooks.isEmpty()) {
-            throw new IllegalArgumentException("사용자의 문제집이 존재하지 않습니다.");
+            throw new NoSuchElementException("사용자의 문제집이 존재하지 않습니다.");
         }
 
         List<WorkBook> workBooksToDelete = userWorkBooks.stream()

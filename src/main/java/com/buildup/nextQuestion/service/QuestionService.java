@@ -4,6 +4,8 @@ import com.buildup.nextQuestion.domain.*;
 import com.buildup.nextQuestion.dto.question.MoveQuestionRequest;
 import com.buildup.nextQuestion.dto.question.SaveQuestionRequest;
 import com.buildup.nextQuestion.dto.question.SearchQuestionByMemberResponse;
+import com.buildup.nextQuestion.exception.DuplicateResourceException;
+import com.buildup.nextQuestion.exception.AccessDeniedException;
 import com.buildup.nextQuestion.repository.*;
 import com.buildup.nextQuestion.utility.JwtUtility;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -13,9 +15,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.file.AccessDeniedException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Service
 @RequiredArgsConstructor
@@ -61,24 +63,24 @@ public class QuestionService {
     public void saveQuestion(String token, SaveQuestionRequest request) throws Exception {
         String userId = jwtUtility.getUserIdFromToken(token);
         Member member = localMemberRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 멤버를 찾을 수 없습니다."))
+                .orElseThrow(() -> new NoSuchElementException("해당 멤버를 찾을 수 없습니다."))
                 .getMember();
 
         Long workBookId = encryptionService.decryptPrimaryKey(request.getEncryptedWorkBookId());
 
         WorkBook workBook = workBookRepository.findById(workBookId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 문제집을 찾을 수 없습니다."));
+                .orElseThrow(() -> new NoSuchElementException("해당 문제집을 찾을 수 없습니다."));
 
         // 회원 문제집 저장
         for (String encryptedQuestionInfoId : request.getEncryptedQuestionInfoIds()) {
             Long questionInfoId = encryptionService.decryptPrimaryKey(encryptedQuestionInfoId);
             QuestionInfo questionInfo = questionInfoRepository.findById(questionInfoId)
-                    .orElseThrow(() -> new IllegalArgumentException("해당 문제가 존재하지 않습니다."));
+                    .orElseThrow(() -> new NoSuchElementException("해당 문제가 존재하지 않습니다."));
 
             // 문제집에 동일한 문제가 이미 존재하는지 확인
             boolean isDuplicate = workBookInfoRepository.existsByWorkBookIdAndQuestionInfoId(workBook.getId(), questionInfoId);
             if (isDuplicate) {
-                throw new IllegalStateException("문제집에 이미 동일한 문제가 존재합니다.");
+                throw new DuplicateResourceException("문제집에 이미 동일한 문제가 존재합니다.");
             }
 
             WorkBookInfo workBookInfo = new WorkBookInfo(questionInfo, workBook);
@@ -91,7 +93,7 @@ public class QuestionService {
     @Transactional
     public List<SearchQuestionByMemberResponse> searchQuestionByMember(String token) throws Exception {
         String userId = jwtUtility.getUserIdFromToken(token);
-        Member member = localMemberRepository.findByUserId(userId).orElseThrow(() -> new IllegalArgumentException("해당 멤버를 찾을 수 없습니다.")).getMember();
+        Member member = localMemberRepository.findByUserId(userId).orElseThrow(() -> new NoSuchElementException("해당 멤버를 찾을 수 없습니다.")).getMember();
 
         List<Question> questionInfos = questionRepository.findAllByMemberId(member.getId());
 
@@ -121,11 +123,11 @@ public class QuestionService {
     public void deleteQuestion(String token, List<String> encryptedQuestionInfoIds) throws Exception {
         String userId = jwtUtility.getUserIdFromToken(token);
         Member member = localMemberRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 멤버를 찾을 수 없습니다."))
+                .orElseThrow(() -> new NoSuchElementException("해당 멤버를 찾을 수 없습니다."))
                 .getMember();
 
         if (encryptedQuestionInfoIds == null || encryptedQuestionInfoIds.isEmpty()) {
-            throw new IllegalArgumentException("삭제할 문제가 없습니다.");
+            throw new NoSuchElementException("삭제할 문제가 없습니다.");
         }
 
         for (String encryptedQuestionInfoId : encryptedQuestionInfoIds) {
@@ -133,11 +135,11 @@ public class QuestionService {
 
 
             Question questionInfo = questionRepository.findById(questionInfoId)
-                    .orElseThrow(() -> new IllegalArgumentException("해당 문제를 찾을 수 없습니다."));
+                    .orElseThrow(() -> new NoSuchElementException("해당 문제를 찾을 수 없습니다."));
 
             // 해당 사용자의 문제인지 검증 (소유자가 아니면 예외 발생)
             if (!questionInfo.getMember().getId().equals(member.getId())) {
-                throw new IllegalAccessException("해당 문제를 삭제할 권한이 없습니다.");
+                throw new AccessDeniedException("해당 문제를 삭제할 권한이 없습니다.");
             }
 
             // 삭제 처리
@@ -151,13 +153,13 @@ public class QuestionService {
 
         // 사용자 조회
         Member member = localMemberRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 멤버를 찾을 수 없습니다."))
+                .orElseThrow(() -> new NoSuchElementException("해당 멤버를 찾을 수 없습니다."))
                 .getMember();
 
         // 원본 문제집 조회 및 검증
         Long sourceWorkBookId = encryptionService.decryptPrimaryKey(request.getEncryptedSourceWorkbookId());
         WorkBook sourceWorkBook = workBookRepository.findById(sourceWorkBookId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 원본 문제집을 찾을 수 없습니다."));
+                .orElseThrow(() -> new NoSuchElementException("해당 원본 문제집을 찾을 수 없습니다."));
         if (!sourceWorkBook.getMember().equals(member)) {
             throw new AccessDeniedException("사용자가 소유한 문제집이 아닙니다.");
         }
@@ -165,16 +167,16 @@ public class QuestionService {
         // 대상 문제집 조회 및 검증
         Long targetWorkbookId = encryptionService.decryptPrimaryKey(request.getEncryptedTargetWorkbookId());
         WorkBook targetWorkBook = workBookRepository.findById(targetWorkbookId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 대상 문제집을 찾을 수 없습니다."));
+                .orElseThrow(() -> new NoSuchElementException("해당 대상 문제집을 찾을 수 없습니다."));
         if (!targetWorkBook.getMember().equals(member)) {
-            throw new AccessDeniedException("사용자가 소유한 대상 문제집이 아닙니다.");
+            throw new NoSuchElementException("사용자가 소유한 대상 문제집이 아닙니다.");
         }
 
         // 문제 이동
         for (String encryptedQuestionInfoId : request.getEncryptedQuestionInfoIds()) {
             Long questionInfoId = encryptionService.decryptPrimaryKey(encryptedQuestionInfoId);
             Question questionInfo = questionRepository.findById(questionInfoId)
-                    .orElseThrow(() -> new IllegalArgumentException("해당 문제 정보가 존재하지 않습니다."));
+                    .orElseThrow(() -> new NoSuchElementException("해당 문제 정보가 존재하지 않습니다."));
 
             if (!questionInfo.getMember().equals(member)) {
                 throw new AccessDeniedException("사용자가 소유한 문제가 아닙니다.");
