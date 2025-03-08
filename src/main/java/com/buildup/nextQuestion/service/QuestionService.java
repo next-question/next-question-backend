@@ -3,7 +3,7 @@ package com.buildup.nextQuestion.service;
 import com.buildup.nextQuestion.domain.*;
 import com.buildup.nextQuestion.dto.question.MoveQuestionRequest;
 import com.buildup.nextQuestion.dto.question.SaveQuestionRequest;
-import com.buildup.nextQuestion.dto.question.SearchQuestionByMemberResponse;
+import com.buildup.nextQuestion.dto.question.FindQuestionByMemberResponse;
 import com.buildup.nextQuestion.exception.DuplicateResourceException;
 import com.buildup.nextQuestion.exception.AccessDeniedException;
 import com.buildup.nextQuestion.repository.*;
@@ -91,29 +91,29 @@ public class QuestionService {
     }
 
     @Transactional
-    public List<SearchQuestionByMemberResponse> searchQuestionByMember(String token) throws Exception {
+    public List<FindQuestionByMemberResponse> searchQuestionByMember(String token) throws Exception {
         String userId = jwtUtility.getUserIdFromToken(token);
         Member member = localMemberRepository.findByUserId(userId).orElseThrow(() -> new NoSuchElementException("해당 멤버를 찾을 수 없습니다.")).getMember();
 
         List<Question> questionInfos = questionRepository.findAllByMemberId(member.getId());
 
-        List<SearchQuestionByMemberResponse> response = new ArrayList<>();
+        List<FindQuestionByMemberResponse> response = new ArrayList<>();
         for (Question questionInfo : questionInfos) {
             QuestionInfo question = questionInfo.getQuestionInfo();
             if (!questionInfo.getDel()) {
-                SearchQuestionByMemberResponse searchQuestionByMemberResponse = new SearchQuestionByMemberResponse();
+                FindQuestionByMemberResponse findQuestionByMemberResponse = new FindQuestionByMemberResponse();
 
-                searchQuestionByMemberResponse.setEncryptedQuestionId(
+                findQuestionByMemberResponse.setEncryptedQuestionId(
                         encryptionService.encryptPrimaryKey(questionInfo.getId())
                 );
-                searchQuestionByMemberResponse.setName(question.getName());
-                searchQuestionByMemberResponse.setType(question.getType());
-                searchQuestionByMemberResponse.setAnswer(question.getAnswer());
-                searchQuestionByMemberResponse.setOpt(question.getOption());
-                searchQuestionByMemberResponse.setCreateTime(question.getCreateTime());
-                searchQuestionByMemberResponse.setRecentSolveTime(questionInfo.getRecentSolveTime());
+                findQuestionByMemberResponse.setName(question.getName());
+                findQuestionByMemberResponse.setType(question.getType());
+                findQuestionByMemberResponse.setAnswer(question.getAnswer());
+                findQuestionByMemberResponse.setOpt(question.getOption());
+                findQuestionByMemberResponse.setCreateTime(question.getCreateTime());
+                findQuestionByMemberResponse.setRecentSolveTime(questionInfo.getRecentSolveTime());
 
-                response.add(searchQuestionByMemberResponse);
+                response.add(findQuestionByMemberResponse);
             }
         }
         return response;

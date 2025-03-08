@@ -1,14 +1,13 @@
 package com.buildup.nextQuestion.controller;
 import com.buildup.nextQuestion.dto.question.MoveQuestionRequest;
 import com.buildup.nextQuestion.dto.question.SaveQuestionRequest;
-import com.buildup.nextQuestion.dto.question.SearchQuestionByMemberResponse;
+import com.buildup.nextQuestion.dto.question.FindQuestionByMemberResponse;
 import com.buildup.nextQuestion.dto.question.UploadFileByMemberReqeust;
 import com.buildup.nextQuestion.service.FileService;
 import com.buildup.nextQuestion.service.QuestionGenerationFacade;
 import com.buildup.nextQuestion.service.QuestionService;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -61,7 +60,7 @@ public class QuestionController {
     public ResponseEntity<?> saveQuestion(
             @RequestHeader("Authorization") String token) throws Exception
     {
-            List<SearchQuestionByMemberResponse> response = questionService.searchQuestionByMember(token);
+            List<FindQuestionByMemberResponse> response = questionService.searchQuestionByMember(token);
             return ResponseEntity.ok(response);
     }
 
