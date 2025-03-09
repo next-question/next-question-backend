@@ -7,6 +7,7 @@ import com.buildup.nextQuestion.dto.solving.*;
 import com.buildup.nextQuestion.repository.*;
 import com.buildup.nextQuestion.utility.JwtUtility;
 
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,7 +37,7 @@ public class SolvingService {
 
         // 사용자 조회
         Member member = localMemberRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 멤버를 찾을 수 없습니다."))
+                .orElseThrow(() -> new EntityNotFoundException("해당 멤버를 찾을 수 없습니다."))
                 .getMember();
 
         Long workBookId = encryptionService.decryptPrimaryKey(request.getEncryptedWorkBookId());
@@ -55,7 +56,8 @@ public class SolvingService {
             for (WorkBookInfo selectedWorkBookInfo : selectedWorkBookInfos) {
                 QuestionInfo questionInfo = selectedWorkBookInfo.getQuestionInfo();
                 Question question = questionRepository.findByMemberIdAndQuestionInfoIdAndDelFalse(
-                        member.getId(), questionInfo.getId()).get();
+                        member.getId(), questionInfo.getId())
+                        .orElseThrow(() -> new EntityNotFoundException("해당 문제를 찾을 수 없습니다."));
 
                 FindQuestionsByNormalExamResponse selectedQuestion = new FindQuestionsByNormalExamResponse();
                 selectedQuestion.setEncryptedQuestionId(encryptionService.encryptPrimaryKey(question.getId()));
@@ -156,12 +158,13 @@ public class SolvingService {
 
         return response;
     }
+
     public List<FindQuestionsByMockExamResponse> findQuestionsByMockExam(String token, FindQuestionsByMockExamRequest request) throws Exception {
         String userId = jwtUtility.getUserIdFromToken(token);
 
         // 사용자 조회
         Member member = localMemberRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 멤버를 찾을 수 없습니다."))
+                .orElseThrow(() -> new EntityNotFoundException("해당 멤버를 찾을 수 없습니다."))
                 .getMember();
 
         Long workBookId = encryptionService.decryptPrimaryKey(request.getEncryptedWorkBookId());
@@ -179,7 +182,8 @@ public class SolvingService {
         for (WorkBookInfo selectedWorkBookInfo : selectedWorkBookInfos) {
             QuestionInfo questionInfo = selectedWorkBookInfo.getQuestionInfo();
             Question question = questionRepository.findByMemberIdAndQuestionInfoIdAndDelFalse(
-                    member.getId(), questionInfo.getId()).get();
+                    member.getId(), questionInfo.getId())
+                    .orElseThrow(() -> new EntityNotFoundException("해당 문제를 찾을 수 없습니다."));
 
             FindQuestionsByMockExamResponse selectedQuestion = new FindQuestionsByMockExamResponse();
             selectedQuestion.setEncryptedQuestionId(encryptionService.encryptPrimaryKey(question.getId()));
@@ -205,7 +209,7 @@ public class SolvingService {
         String userId = jwtUtility.getUserIdFromToken(token);
 
         Member member = localMemberRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 멤버를 찾을 수 없습니다."))
+                .orElseThrow(() -> new EntityNotFoundException("해당 멤버를 찾을 수 없습니다."))
                 .getMember();
 
         // 기록 저장
@@ -220,7 +224,8 @@ public class SolvingService {
 
         for (NormalExamInfoDTO info : infos) {
             Long questionId = encryptionService.decryptPrimaryKey(info.getEncryptedQuestionId());
-            Question question = questionRepository.findById(questionId).get();
+            Question question = questionRepository.findById(questionId)
+                    .orElseThrow(() -> new EntityNotFoundException("해당 문제를 찾을 수 없습니다."));
 
             QuestionInfo questionInfo = question.getQuestionInfo();
 
@@ -238,7 +243,7 @@ public class SolvingService {
         String userId = jwtUtility.getUserIdFromToken(token);
 
         Member member = localMemberRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 멤버를 찾을 수 없습니다."))
+                .orElseThrow(() -> new EntityNotFoundException("해당 멤버를 찾을 수 없습니다."))
                 .getMember();
 
         List<FindHistoryByMemberResponse> response = new ArrayList<>();
@@ -275,8 +280,4 @@ public class SolvingService {
         }
         return responses;
     }
-
-
-
-
 }

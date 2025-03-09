@@ -20,64 +20,44 @@ public class SolvingController {
     public ResponseEntity<?> searchQuestionsByNormalExam(
             @RequestHeader("Authorization") String token,
             @RequestBody FindQuestionsByNormalExamRequest request
-    ){
-        try{
+    ) throws Exception {
             List<FindQuestionsByNormalExamResponse> response = solvingService.findQuestionsByNormalExam(token, request);
             return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-        }
     }
 
     @PostMapping("/solving/save")
     public ResponseEntity<?> saveHistoryByNormalExam(
             @RequestHeader("Authorization") String token,
             @RequestBody SaveHistoryByNormalExamRequest request
-    ){
-        try{
+    )throws Exception{
             solvingService.saveHistoryByNormalExam(token, request);
             return ResponseEntity.ok("문제 풀이 결과를 저장했습니다.");
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-        }
     }
 
     @GetMapping("/solving/mock/search")
     public ResponseEntity<?> searchQuestionsByMockExam(
             @RequestHeader("Authorization") String token,
             @RequestBody FindQuestionsByMockExamRequest request
-    ){
-        try{
+    )throws Exception{
             List<FindQuestionsByMockExamResponse> response = solvingService.findQuestionsByMockExam(token, request);
             return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-        }
     }
 
 
     @GetMapping("/solving/histories/search")
     public ResponseEntity<?> saveHistoryByNormalExam(
             @RequestHeader("Authorization") String token
-    ){
-        try{
+    ) throws Exception {
             List<FindHistoryByMemberResponse> response = solvingService.findHistoryByMember(token);
             return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-        }
     }
 
     @GetMapping("/solving/historyInfo/search")
     public ResponseEntity<?> findHistoryInfoByHistory(
             @RequestHeader("Authorization") String token,
             @RequestBody FindHistoryInfoByHistoryRequest request
-    ){
-        try{
+    ) throws Exception {
             List<FindHistoryInfoByHistoryResponse> response = solvingService.findHistoryInfoByHistory(request);
             return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-        }
     }
 }
