@@ -1,6 +1,6 @@
 package com.buildup.nextQuestion.domain;
 
-import com.buildup.nextQuestion.domain.enums.SolveType;
+import com.buildup.nextQuestion.domain.enums.SolvedType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -19,7 +19,7 @@ public class History {
     @JoinColumn(name = "member_id")
     private Member member;
 
-    private Timestamp solveTime;
+    private Timestamp solvedDate;
 
-    private SolveType type;
+    private SolvedType type;
 }
