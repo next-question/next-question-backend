@@ -29,7 +29,7 @@ public class SolvingController {
         }
     }
 
-    @PostMapping("/solving/normal/save")
+    @PostMapping("/solving/save")
     public ResponseEntity<?> saveHistoryByNormalExam(
             @RequestHeader("Authorization") String token,
             @RequestBody SaveHistoryByNormalExamRequest request
