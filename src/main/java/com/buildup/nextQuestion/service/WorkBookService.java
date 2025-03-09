@@ -18,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 
@@ -39,7 +38,7 @@ public class WorkBookService {
 
         String userId = jwtUtility.getUserIdFromToken(token);
         Member member = localMemberRepository.findByUserId(userId)
-                .orElseThrow(() -> new NoSuchElementException("해당 멤버를 찾을 수 없습니다."))
+                .orElseThrow(() -> new EntityNotFoundException("해당 멤버를 찾을 수 없습니다."))
                 .getMember();
         String requestedWorkBookName = request.getWorkBookName();
 
@@ -64,12 +63,12 @@ public class WorkBookService {
     public List<GetWorkBookResponse> getWorkBook(String token) throws Exception {
         String userId = jwtUtility.getUserIdFromToken(token);
         Member member = localMemberRepository.findByUserId(userId)
-                .orElseThrow(() -> new NoSuchElementException("해당 멤버를 찾을 수 없습니다."))
+                .orElseThrow(() -> new EntityNotFoundException("해당 멤버를 찾을 수 없습니다."))
                 .getMember();
 
         List<WorkBook> workBooks = workBookRepository.findAllByMemberId(member.getId());
         if (workBooks.isEmpty()) {
-            throw new NoSuchElementException("해당 사용자의 문제집이 존재하지 않습니다.");
+            throw new EntityNotFoundException("해당 사용자의 문제집이 존재하지 않습니다.");
         }
 
 
@@ -90,13 +89,13 @@ public class WorkBookService {
         String userId = jwtUtility.getUserIdFromToken(token);
 
         Member member = localMemberRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."))
+                .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."))
                 .getMember();
 
         Long workBookId = encryptionService.decryptPrimaryKey(request.getEncryptedWorkBookId());
         //해당 문제집 찾기
         WorkBook workBook = workBookRepository.findById(workBookId).orElseThrow(
-                () -> new IllegalArgumentException("문제집이 존재하지 않습니다."));
+                () -> new EntityNotFoundException("문제집이 존재하지 않습니다."));
 
         if (!workBookRepository.existsByIdAndMemberId(workBookId, member.getId())){
             throw new AccessDeniedException("사용자의 문제집이 아닙니다.");
@@ -132,7 +131,7 @@ public class WorkBookService {
         String userId = jwtUtility.getUserIdFromToken(token);
 
         Member member = localMemberRepository.findByUserId(userId)
-                .orElseThrow(() -> new NoSuchElementException("사용자를 찾을 수 없습니다."))
+                .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."))
                 .getMember();
 
         List<Long> decryptedIds = encryptedWorkBookIds.stream()
@@ -149,7 +148,7 @@ public class WorkBookService {
         List<WorkBook> userWorkBooks = workBookRepository.findAllByMemberId(member.getId());
 
         if (userWorkBooks.isEmpty()) {
-            throw new NoSuchElementException("사용자의 문제집이 존재하지 않습니다.");
+            throw new EntityNotFoundException("사용자의 문제집이 존재하지 않습니다.");
         }
 
         List<WorkBook> workBooksToDelete = userWorkBooks.stream()
@@ -175,18 +174,20 @@ public class WorkBookService {
     @Transactional
     public void updateWorkBook(String token, UpdateWorkBookRequest request) throws Exception {
         String userId = jwtUtility.getUserIdFromToken(token);
-        Member member = localMemberRepository.findByUserId(userId).get().getMember();
+        Member member = localMemberRepository.findByUserId(userId)
+                .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."))
+                .getMember();
 
         String requestedWorkBookName = request.getName();
 
         List<WorkBook> infos = workBookRepository.findByName(requestedWorkBookName);
         if (!infos.isEmpty()) {
-            throw new IllegalArgumentException("이미 존재하는 문제집입니다.");
+            throw new DuplicateResourceException("이미 존재하는 문제집입니다.");
         }
 
         Long workbookId = encryptionService.decryptPrimaryKey(request.getEncryptedWorkBookId());
         WorkBook workBook = workBookRepository.findById(workbookId).orElseThrow(
-                () -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                () -> new EntityNotFoundException("문제집을 찾을 수 없습니다."));
         Long requestedMemberId = workBook.getMember().getId();
 
         // 삭제하려는 문제집이 해당 토큰의 멤버 문제집인지 검증

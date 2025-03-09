@@ -30,14 +30,9 @@ public class WorkBookController {
     @GetMapping("member/workBooks/search")
     public ResponseEntity<?> searchWorkBook(
             @RequestHeader("Authorization") String token
-    ) {
-        try {
+    ) throws Exception {
             List<GetWorkBookResponse> workBookInfos = workBookService.getWorkBook(token);
-
             return ResponseEntity.ok(workBookInfos);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 
 
@@ -45,13 +40,9 @@ public class WorkBookController {
     public ResponseEntity<?> searchQuestionsByWorkBook(
             @RequestHeader("Authorization") String token,
             @RequestBody GetQuestionsByWorkBookRequest request
-    ) {
-        try{
+    ) throws Exception {
             List<GetQuestionsByWorkBookResponse> response = workBookService.searchQuestionsByWorkBook(token, request);
             return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-        }
     }
 
     @DeleteMapping("member/workBooks/delete")
@@ -59,28 +50,17 @@ public class WorkBookController {
             @RequestHeader("Authorization") String token,
             @RequestBody List<String> encryptedWorkBookInfoIds
 
-    ) {
-        try{
+    ) throws Exception{
             workBookService.deleteWorkBook(token, encryptedWorkBookInfoIds);
             return ResponseEntity.ok("문제집이 성공적으로 삭제되었습니다.");
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 
     @PatchMapping("member/workBook/update")
     public ResponseEntity<String> deleteWorkBook(
             @RequestHeader("Authorization") String token,
-
             @RequestBody UpdateWorkBookRequest updateWorkBookRequest
-            ){
-        try{
+            ) throws Exception{
             workBookService.updateWorkBook(token, updateWorkBookRequest);
-
             return ResponseEntity.ok("문제집 명이 성공적으로 변경되었습니다.");
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
     }
 }

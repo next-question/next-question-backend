@@ -1,5 +1,6 @@
 package com.buildup.nextQuestion.exception;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +22,7 @@ public class GlobalExceptionHandler {
     }
 
     //잘못된 인자 및 파라미터 전달(아이디 비밀번호 틀리는 경우 등)
-    @ExceptionHandler({IllegalArgumentException.class, NoSuchElementException.class, IOException.class, SecurityException.class})
+    @ExceptionHandler({IllegalArgumentException.class, NoSuchElementException.class, EntityNotFoundException.class, IOException.class, SecurityException.class})
     public ResponseEntity<Map<String, Object>> handleIllegalArgumentException(IllegalArgumentException e) {
         return buildErrorResponse(HttpStatus.BAD_REQUEST, "Bad Request Error", e.getMessage());
     }

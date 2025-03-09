@@ -13,6 +13,7 @@ import com.buildup.nextQuestion.utility.JwtUtility;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +22,6 @@ import org.springframework.web.servlet.HandlerMapping;
 import java.util.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 @Service
 @RequiredArgsConstructor
@@ -74,19 +74,19 @@ public class QuestionService {
     public void saveQuestion(String token, SaveQuestionRequest request) throws Exception {
         String userId = jwtUtility.getUserIdFromToken(token);
         Member member = localMemberRepository.findByUserId(userId)
-                .orElseThrow(() -> new NoSuchElementException("해당 멤버를 찾을 수 없습니다."))
+                .orElseThrow(() -> new EntityNotFoundException("해당 멤버를 찾을 수 없습니다."))
                 .getMember();
 
         Long workBookId = encryptionService.decryptPrimaryKey(request.getEncryptedWorkBookId());
 
         WorkBook workBook = workBookRepository.findById(workBookId)
-                .orElseThrow(() -> new NoSuchElementException("해당 문제집을 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("해당 문제집을 찾을 수 없습니다."));
 
         // 회원 문제집 저장
         for (String encryptedQuestionInfoId : request.getEncryptedQuestionInfoIds()) {
             Long questionInfoId = encryptionService.decryptPrimaryKey(encryptedQuestionInfoId);
             QuestionInfo questionInfo = questionInfoRepository.findById(questionInfoId)
-                    .orElseThrow(() -> new NoSuchElementException("해당 문제가 존재하지 않습니다."));
+                    .orElseThrow(() -> new EntityNotFoundException("해당 문제가 존재하지 않습니다."));
 
             // 문제집에 동일한 문제가 이미 존재하는지 확인
             boolean isDuplicate = workBookInfoRepository.existsByWorkBookIdAndQuestionInfoId(workBook.getId(), questionInfoId);
@@ -104,7 +104,7 @@ public class QuestionService {
     @Transactional
     public List<FindQuestionByMemberResponse> findQuestionByMember(String token) throws Exception {
         String userId = jwtUtility.getUserIdFromToken(token);
-        Member member = localMemberRepository.findByUserId(userId).orElseThrow(() -> new NoSuchElementException("해당 멤버를 찾을 수 없습니다.")).getMember();
+        Member member = localMemberRepository.findByUserId(userId).orElseThrow(() -> new EntityNotFoundException("해당 멤버를 찾을 수 없습니다.")).getMember();
 
         List<Question> questionInfos = questionRepository.findAllByMemberId(member.getId());
 
@@ -134,11 +134,11 @@ public class QuestionService {
     public void deleteQuestion(String token, List<String> encryptedQuestionIds) throws Exception {
         String userId = jwtUtility.getUserIdFromToken(token);
         Member member = localMemberRepository.findByUserId(userId)
-                .orElseThrow(() -> new NoSuchElementException("해당 멤버를 찾을 수 없습니다."))
+                .orElseThrow(() -> new EntityNotFoundException("해당 멤버를 찾을 수 없습니다."))
                 .getMember();
 
         if (encryptedQuestionIds == null || encryptedQuestionIds.isEmpty()) {
-            throw new NoSuchElementException("삭제할 문제가 없습니다.");
+            throw new EntityNotFoundException("삭제할 문제가 없습니다.");
         }
 
         for (String encryptedQuestionId : encryptedQuestionIds) {
@@ -146,7 +146,7 @@ public class QuestionService {
 
 
             Question question = questionRepository.findById(questionId)
-                    .orElseThrow(() -> new NoSuchElementException("해당 문제를 찾을 수 없습니다."));
+                    .orElseThrow(() -> new EntityNotFoundException("해당 문제를 찾을 수 없습니다."));
 
             // 해당 사용자의 문제인지 검증 (소유자가 아니면 예외 발생)
             if (!question.getMember().getId().equals(member.getId())) {
@@ -164,13 +164,13 @@ public class QuestionService {
 
         // 사용자 조회
         Member member = localMemberRepository.findByUserId(userId)
-                .orElseThrow(() -> new NoSuchElementException("해당 멤버를 찾을 수 없습니다."))
+                .orElseThrow(() -> new EntityNotFoundException("해당 멤버를 찾을 수 없습니다."))
                 .getMember();
 
         // 원본 문제집 조회 및 검증
         Long sourceWorkBookId = encryptionService.decryptPrimaryKey(request.getEncryptedSourceWorkbookId());
         WorkBook sourceWorkBook = workBookRepository.findById(sourceWorkBookId)
-                .orElseThrow(() -> new NoSuchElementException("해당 원본 문제집을 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("해당 원본 문제집을 찾을 수 없습니다."));
         if (!sourceWorkBook.getMember().equals(member)) {
             throw new AccessDeniedException("사용자가 소유한 문제집이 아닙니다.");
         }
@@ -178,16 +178,16 @@ public class QuestionService {
         // 대상 문제집 조회 및 검증
         Long targetWorkbookId = encryptionService.decryptPrimaryKey(request.getEncryptedTargetWorkbookId());
         WorkBook targetWorkBook = workBookRepository.findById(targetWorkbookId)
-                .orElseThrow(() -> new NoSuchElementException("해당 대상 문제집을 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("해당 대상 문제집을 찾을 수 없습니다."));
         if (!targetWorkBook.getMember().equals(member)) {
-            throw new NoSuchElementException("사용자가 소유한 대상 문제집이 아닙니다.");
+            throw new EntityNotFoundException("사용자가 소유한 대상 문제집이 아닙니다.");
         }
 
         // 문제 이동
         for (String encryptedQuestionInfoId : request.getEncryptedQuestionInfoIds()) {
             Long questionInfoId = encryptionService.decryptPrimaryKey(encryptedQuestionInfoId);
             Question questionInfo = questionRepository.findById(questionInfoId)
-                    .orElseThrow(() -> new NoSuchElementException("해당 문제 정보가 존재하지 않습니다."));
+                    .orElseThrow(() -> new EntityNotFoundException("해당 문제 정보가 존재하지 않습니다."));
 
             if (!questionInfo.getMember().equals(member)) {
                 throw new AccessDeniedException("사용자가 소유한 문제가 아닙니다.");
@@ -197,7 +197,7 @@ public class QuestionService {
             // 대상 문제집에 동일한 문제가 존재하는지 확인
             boolean isDuplicate = workBookInfoRepository.existsByWorkBookIdAndQuestionInfoId(targetWorkbookId, targetQuestionInfo.getId());
             if (isDuplicate) {
-                throw new IllegalStateException("대상 문제집에 이미 동일한 문제가 존재합니다.");
+                throw new DuplicateResourceException("대상 문제집에 이미 동일한 문제가 존재합니다.");
             }
 
             WorkBookInfo workBookInfo = workBookInfoRepository.findByWorkBookIdAndQuestionInfoId(
