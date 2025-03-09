@@ -37,16 +37,10 @@ public class MemberController {
     }
 
     @GetMapping("public/members/search")
-    public ResponseEntity<?> findAllMember(
-            @RequestHeader("Authorization") String token) {
-        try {
+    public ResponseEntity<?> findAllMember (
+            @RequestHeader("Authorization") String token) throws Exception {
             List<FindMembersResponse> response = memberService.findMembers();
             return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("서버 오류가 발생했습니다.");
-        }
     }
 
 

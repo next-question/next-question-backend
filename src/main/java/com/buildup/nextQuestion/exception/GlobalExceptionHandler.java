@@ -1,5 +1,6 @@
 package com.buildup.nextQuestion.exception;
 
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -28,7 +29,10 @@ public class GlobalExceptionHandler {
     //서버 오류
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneralException(Exception e) {
-        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error", e.getMessage());
+        String message = "서버 에러";
+        if(e.getMessage() != null){ message = e.getMessage(); }
+        else if(e instanceof DataAccessException){ message = "DB 오류";}
+        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error", message);
     }
 
     private ResponseEntity<Map<String, Object>> buildErrorResponse(HttpStatus status, String error, String message) {
