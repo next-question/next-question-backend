@@ -4,6 +4,7 @@ import com.buildup.nextQuestion.domain.*;
 import com.buildup.nextQuestion.domain.enums.QuestionType;
 import com.buildup.nextQuestion.dto.question.FindQuestionByNormalExamRequest;
 import com.buildup.nextQuestion.dto.question.FindQuestionsByNormalExamResponse;
+import com.buildup.nextQuestion.dto.solving.FindHistoryByMemberResponse;
 import com.buildup.nextQuestion.dto.solving.NormalExamInfoDTO;
 import com.buildup.nextQuestion.dto.solving.SaveHistoryByNormalExamRequest;
 import com.buildup.nextQuestion.repository.*;
@@ -175,7 +176,7 @@ public class SolvingService {
         // 기록 저장
         History history = new History();
         history.setMember(member);
-        history.setSolveTime(new Timestamp(System.currentTimeMillis()));
+        history.setSolvedDate(new Timestamp(System.currentTimeMillis()));
         history.setType(request.getType());
 
         History savedHistory = historyRepository.save(history);
@@ -195,6 +196,28 @@ public class SolvingService {
 
             historyInfoRepository.save(historyInfo);
         }
+    }
+
+    @Transactional
+    public List<FindHistoryByMemberResponse> findHistoryByMember(String token) throws Exception {
+        String userId = jwtUtility.getUserIdFromToken(token);
+
+        Member member = localMemberRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 멤버를 찾을 수 없습니다."))
+                .getMember();
+
+        List<FindHistoryByMemberResponse> response = new ArrayList<>();
+
+        List<History> histories = historyRepository.findAllByMemberId(member.getId());
+        for (History history : histories) {
+            FindHistoryByMemberResponse requestedHistory = new FindHistoryByMemberResponse();
+            requestedHistory.setEncryptedHistoryId(encryptionService.encryptPrimaryKey(history.getId()));
+            requestedHistory.setSolvedDate(history.getSolvedDate());
+            requestedHistory.setSolvedType(history.getType());
+
+            response.add(requestedHistory);
+        }
+        return response;
     }
 
 

@@ -5,13 +5,13 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
+import java.sql.Timestamp;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class SaveHistoryByNormalExamRequest {
-    private SolvedType type;
-    private List<NormalExamInfoDTO> info;
-
+public class FindHistoryByMemberResponse {
+    private String encryptedHistoryId;
+    private Timestamp solvedDate;
+    private SolvedType solvedType;
 }
