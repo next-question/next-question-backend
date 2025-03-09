@@ -1,4 +1,4 @@
-package com.buildup.nextQuestion.dto.question;
+package com.buildup.nextQuestion.dto.solving;
 
 import com.buildup.nextQuestion.domain.enums.QuestionType;
 import lombok.AllArgsConstructor;

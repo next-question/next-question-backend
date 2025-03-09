@@ -2,8 +2,7 @@ package com.buildup.nextQuestion.service;
 
 import com.buildup.nextQuestion.domain.*;
 import com.buildup.nextQuestion.domain.enums.QuestionType;
-import com.buildup.nextQuestion.dto.question.FindQuestionByNormalExamRequest;
-import com.buildup.nextQuestion.dto.question.FindQuestionsByNormalExamResponse;
+import com.buildup.nextQuestion.dto.solving.FindQuestionsByNormalExamResponse;
 import com.buildup.nextQuestion.dto.solving.*;
 import com.buildup.nextQuestion.repository.*;
 import com.buildup.nextQuestion.utility.JwtUtility;
@@ -32,7 +31,7 @@ public class SolvingService {
 
 
     @Transactional
-    public List<FindQuestionsByNormalExamResponse> findQuestionsByNormalExam(String token, FindQuestionByNormalExamRequest request) throws Exception {
+    public List<FindQuestionsByNormalExamResponse> findQuestionsByNormalExam(String token, FindQuestionsByNormalExamRequest request) throws Exception {
         String userId = jwtUtility.getUserIdFromToken(token);
 
         // 사용자 조회
@@ -155,6 +154,44 @@ public class SolvingService {
             }
         }
 
+        return response;
+    }
+    public List<FindQuestionsByMockExamResponse> findQuestionsByMockExam(String token, FindQuestionsByMockExamRequest request) throws Exception {
+        String userId = jwtUtility.getUserIdFromToken(token);
+
+        // 사용자 조회
+        Member member = localMemberRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 멤버를 찾을 수 없습니다."))
+                .getMember();
+
+        Long workBookId = encryptionService.decryptPrimaryKey(request.getEncryptedWorkBookId());
+
+        if (!workBookRepository.existsByIdAndMemberId(workBookId, member.getId())) {
+            throw new AccessDeniedException("사용자가 소유한 문제집이 아닙니다.");
+        }
+        List<WorkBookInfo> workBookInfos = workBookInfoRepository.findAllByWorkBookId(workBookId);
+        if (workBookInfos.size() < request.getOptions().getCount()) {
+            throw new IllegalArgumentException("문제집의 문제 수가 선택한 수보다 적습니다.");
+        }
+        List<FindQuestionsByMockExamResponse> response = new ArrayList<>();
+        Collections.shuffle(workBookInfos);
+        List<WorkBookInfo> selectedWorkBookInfos = workBookInfos.subList(0, request.getOptions().getCount());
+        for (WorkBookInfo selectedWorkBookInfo : selectedWorkBookInfos) {
+            QuestionInfo questionInfo = selectedWorkBookInfo.getQuestionInfo();
+            Question question = questionRepository.findByMemberIdAndQuestionInfoIdAndDelFalse(
+                    member.getId(), questionInfo.getId()).get();
+
+            FindQuestionsByMockExamResponse selectedQuestion = new FindQuestionsByMockExamResponse();
+            selectedQuestion.setEncryptedQuestionId(encryptionService.encryptPrimaryKey(question.getId()));
+            selectedQuestion.setName(questionInfo.getName());
+            selectedQuestion.setType(questionInfo.getType());
+            selectedQuestion.setAnswer(questionInfo.getAnswer());
+            selectedQuestion.setOpt(questionInfo.getOption());
+            selectedQuestion.setWrong(question.getWrong());
+            selectedQuestion.setRecentSolveTime(question.getRecentSolveTime());
+
+            response.add(selectedQuestion);
+        }
         return response;
     }
 

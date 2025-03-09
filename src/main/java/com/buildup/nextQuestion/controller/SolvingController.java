@@ -1,11 +1,6 @@
 package com.buildup.nextQuestion.controller;
 
-import com.buildup.nextQuestion.dto.question.FindQuestionByNormalExamRequest;
-import com.buildup.nextQuestion.dto.question.FindQuestionsByNormalExamResponse;
-import com.buildup.nextQuestion.dto.solving.FindHistoryByMemberResponse;
-import com.buildup.nextQuestion.dto.solving.FindHistoryInfoByHistoryRequest;
-import com.buildup.nextQuestion.dto.solving.FindHistoryInfoByHistoryResponse;
-import com.buildup.nextQuestion.dto.solving.SaveHistoryByNormalExamRequest;
+import com.buildup.nextQuestion.dto.solving.*;
 import com.buildup.nextQuestion.service.SolvingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,9 +17,9 @@ public class SolvingController {
     private final SolvingService solvingService;
 
     @GetMapping("/solving/normal/search")
-    public ResponseEntity<?> searchQuestionsByWorkBook(
+    public ResponseEntity<?> searchQuestionsByNormalExam(
             @RequestHeader("Authorization") String token,
-            @RequestBody FindQuestionByNormalExamRequest request
+            @RequestBody FindQuestionsByNormalExamRequest request
     ){
         try{
             List<FindQuestionsByNormalExamResponse> response = solvingService.findQuestionsByNormalExam(token, request);
@@ -46,6 +41,20 @@ public class SolvingController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
+
+    @GetMapping("/solving/mock/search")
+    public ResponseEntity<?> searchQuestionsByMockExam(
+            @RequestHeader("Authorization") String token,
+            @RequestBody FindQuestionsByMockExamRequest request
+    ){
+        try{
+            List<FindQuestionsByMockExamResponse> response = solvingService.findQuestionsByMockExam(token, request);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
 
     @GetMapping("/solving/histories/search")
     public ResponseEntity<?> saveHistoryByNormalExam(
