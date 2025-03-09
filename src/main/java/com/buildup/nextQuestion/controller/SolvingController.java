@@ -3,6 +3,8 @@ package com.buildup.nextQuestion.controller;
 import com.buildup.nextQuestion.dto.question.FindQuestionByNormalExamRequest;
 import com.buildup.nextQuestion.dto.question.FindQuestionsByNormalExamResponse;
 import com.buildup.nextQuestion.dto.solving.FindHistoryByMemberResponse;
+import com.buildup.nextQuestion.dto.solving.FindHistoryInfoByHistoryRequest;
+import com.buildup.nextQuestion.dto.solving.FindHistoryInfoByHistoryResponse;
 import com.buildup.nextQuestion.dto.solving.SaveHistoryByNormalExamRequest;
 import com.buildup.nextQuestion.service.SolvingService;
 import lombok.RequiredArgsConstructor;
@@ -51,6 +53,19 @@ public class SolvingController {
     ){
         try{
             List<FindHistoryByMemberResponse> response = solvingService.findHistoryByMember(token);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/solving/historyInfo/search")
+    public ResponseEntity<?> findHistoryInfoByHistory(
+            @RequestHeader("Authorization") String token,
+            @RequestBody FindHistoryInfoByHistoryRequest request
+    ){
+        try{
+            List<FindHistoryInfoByHistoryResponse> response = solvingService.findHistoryInfoByHistory(request);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());

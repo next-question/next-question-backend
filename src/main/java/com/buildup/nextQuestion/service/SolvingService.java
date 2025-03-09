@@ -4,9 +4,7 @@ import com.buildup.nextQuestion.domain.*;
 import com.buildup.nextQuestion.domain.enums.QuestionType;
 import com.buildup.nextQuestion.dto.question.FindQuestionByNormalExamRequest;
 import com.buildup.nextQuestion.dto.question.FindQuestionsByNormalExamResponse;
-import com.buildup.nextQuestion.dto.solving.FindHistoryByMemberResponse;
-import com.buildup.nextQuestion.dto.solving.NormalExamInfoDTO;
-import com.buildup.nextQuestion.dto.solving.SaveHistoryByNormalExamRequest;
+import com.buildup.nextQuestion.dto.solving.*;
 import com.buildup.nextQuestion.repository.*;
 import com.buildup.nextQuestion.utility.JwtUtility;
 
@@ -218,6 +216,27 @@ public class SolvingService {
             response.add(requestedHistory);
         }
         return response;
+    }
+
+    @Transactional
+    public List<FindHistoryInfoByHistoryResponse> findHistoryInfoByHistory(FindHistoryInfoByHistoryRequest request) throws Exception {
+        Long historyId = encryptionService.decryptPrimaryKey(request.getEncryptedHistoryId());
+        List<HistoryInfo> historyInfos = historyInfoRepository.findAllByHistoryId(historyId);
+
+        List<FindHistoryInfoByHistoryResponse> responses = new ArrayList<>();
+        for (HistoryInfo historyInfo : historyInfos) {
+            FindHistoryInfoByHistoryResponse response = new FindHistoryInfoByHistoryResponse();
+
+            QuestionInfo questionInfo = historyInfo.getQuestion().getQuestionInfo();
+            response.setName(questionInfo.getName());
+            response.setType(questionInfo.getType());
+            response.setAnswer(questionInfo.getAnswer());
+            response.setOpt(questionInfo.getOption());
+            response.setWrong(historyInfo.getWrong());
+
+            responses.add(response);
+        }
+        return responses;
     }
 
 
