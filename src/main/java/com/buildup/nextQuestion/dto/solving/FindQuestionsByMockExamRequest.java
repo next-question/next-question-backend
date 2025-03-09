@@ -1,14 +1,14 @@
 package com.buildup.nextQuestion.dto.solving;
 
+import com.buildup.nextQuestion.dto.question.NormalExamOption;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import com.buildup.nextQuestion.dto.question.*;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class FindQuestionByNormalExamRequest {
+public class FindQuestionsByMockExamRequest {
     private String encryptedWorkBookId;
-    private NormalExamOption options;
+    private MockExamOption options;
 }
