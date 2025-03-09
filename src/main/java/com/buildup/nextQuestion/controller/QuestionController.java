@@ -1,8 +1,5 @@
 package com.buildup.nextQuestion.controller;
-import com.buildup.nextQuestion.dto.question.MoveQuestionRequest;
-import com.buildup.nextQuestion.dto.question.SaveQuestionRequest;
-import com.buildup.nextQuestion.dto.question.FindQuestionByMemberResponse;
-import com.buildup.nextQuestion.dto.question.UploadFileByMemberReqeust;
+import com.buildup.nextQuestion.dto.question.*;
 import com.buildup.nextQuestion.service.FileService;
 import com.buildup.nextQuestion.service.QuestionGenerationFacade;
 import com.buildup.nextQuestion.service.QuestionService;
@@ -42,9 +39,9 @@ public class QuestionController {
 
             fileService.validateFile(pdfFile);
 
-            List<String> encryptedQeustionIds = questionGenerationFacade.generateQuestionByMember(pdfFile, uploadFileByMemberReqeust.getNumOfQuestions());
+        List<UploadFileByMemberResponse> response = questionGenerationFacade.generateQuestionByMember(pdfFile, uploadFileByMemberReqeust.getNumOfQuestions());
 
-            return ResponseEntity.ok(encryptedQeustionIds);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("member/questions/save")

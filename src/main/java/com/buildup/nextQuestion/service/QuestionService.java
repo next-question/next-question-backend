@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.servlet.HandlerMapping;
 
 import java.util.*;
 import java.util.ArrayList;
@@ -35,14 +36,15 @@ public class QuestionService {
     private final LocalMemberRepository localMemberRepository;
     private final WorkBookRepository workBookRepository;
     private final WorkBookInfoRepository workBookInfoRepository;
+    private final HandlerMapping resourceHandlerMapping;
 
     //생성된 문제 리스트 저장
     @Transactional
-    public List<String> saveAll(JsonNode jsonNode) throws Exception {
+    public List<UploadFileByMemberResponse> saveAll(JsonNode jsonNode) throws Exception {
         ObjectMapper objectMapper = new ObjectMapper();
 
         JsonNode questionsNode = jsonNode.get("questions");
-        List<String> encryptedQeustionIds = new ArrayList<>();
+        List<UploadFileByMemberResponse> response = new ArrayList<>();
         if (questionsNode != null && questionsNode.isArray()) {
 
             List<QuestionInfo> questionInfos = objectMapper.readValue(
@@ -53,13 +55,19 @@ public class QuestionService {
             List<QuestionInfo> createdQuestionInfos = questionInfoRepository.saveAll(questionInfos);
 
             for (QuestionInfo createdQuestionInfo : createdQuestionInfos) {
-                String encryptedQuestionId = encryptionService.encryptPrimaryKey(createdQuestionInfo.getId());
-                encryptedQeustionIds.add(encryptedQuestionId);
+                UploadFileByMemberResponse questionInfo = new UploadFileByMemberResponse();
+                questionInfo.setEncryptedQuestionInfoId(
+                        encryptionService.encryptPrimaryKey(createdQuestionInfo.getId()));
+                questionInfo.setName(createdQuestionInfo.getName());
+                questionInfo.setType(createdQuestionInfo.getType());
+                questionInfo.setAnswer(createdQuestionInfo.getAnswer());
+                questionInfo.setOpt(createdQuestionInfo.getOption());
 
+                response.add(questionInfo);
             }
         }
 
-        return encryptedQeustionIds;
+        return response;
     }
 
     @Transactional

@@ -2,6 +2,7 @@ package com.buildup.nextQuestion.service;
 
 import com.buildup.nextQuestion.domain.LocalMember;
 import com.buildup.nextQuestion.domain.Member;
+import com.buildup.nextQuestion.dto.question.UploadFileByMemberResponse;
 import com.buildup.nextQuestion.repository.LocalMemberRepository;
 import com.buildup.nextQuestion.utility.JwtUtility;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -29,7 +30,7 @@ public class QuestionGenerationFacade {
         return gptService.stringToJson(response);
     }
 
-    public List<String> generateQuestionByMember(MultipartFile file, String numOfQuestions) throws Exception {
+    public List<UploadFileByMemberResponse> generateQuestionByMember(MultipartFile file, String numOfQuestions) throws Exception {
 
         String content = fileService.extractTextFromPDF(file);
         String response = gptService.requestGPT(content, numOfQuestions);
