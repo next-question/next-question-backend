@@ -6,7 +6,6 @@ import com.buildup.nextQuestion.dto.question.SaveQuestionRequest;
 import com.buildup.nextQuestion.dto.question.FindQuestionByMemberResponse;
 import com.buildup.nextQuestion.exception.DuplicateResourceException;
 import com.buildup.nextQuestion.exception.AccessDeniedException;
-import com.buildup.nextQuestion.domain.enums.QuestionType;
 import com.buildup.nextQuestion.dto.question.*;
 import com.buildup.nextQuestion.repository.*;
 import com.buildup.nextQuestion.utility.JwtUtility;
@@ -17,7 +16,6 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.servlet.HandlerMapping;
 
 import java.util.*;
 import java.util.ArrayList;
@@ -36,7 +34,6 @@ public class QuestionService {
     private final LocalMemberRepository localMemberRepository;
     private final WorkBookRepository workBookRepository;
     private final WorkBookInfoRepository workBookInfoRepository;
-    private final HandlerMapping resourceHandlerMapping;
 
     //생성된 문제 리스트 저장
     @Transactional

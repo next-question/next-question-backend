@@ -16,6 +16,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -50,7 +51,7 @@ public class WorkBookService {
         WorkBook workBook = new WorkBook();
         workBook.setMember(member);
         workBook.setName(requestedWorkBookName);
-        workBook.setRecentSolveDate(null);
+        workBook.setRecentSolveDate(new Timestamp(System.currentTimeMillis()));
         Long workBookInfoId = workBookRepository.save(workBook).getId();
         CreateWorkBookResponse createWorkBookResponse = new CreateWorkBookResponse();
         createWorkBookResponse.setEncryptedWorkBookId(encryptionService.encryptPrimaryKey(workBookInfoId));
@@ -72,17 +73,25 @@ public class WorkBookService {
         }
 
 
-        List<GetWorkBookResponse> getWorkBookRespons = new ArrayList<>();
+        List<GetWorkBookResponse> getWorkBookResponses = new ArrayList<>();
+        int totalQuestion = 0;
         for (WorkBook workBook : workBooks) {
-            GetWorkBookResponse getWorkBookResponse = new GetWorkBookResponse();
+            for (WorkBookInfo workBookInfo : workBookInfoRepository.findAllByWorkBookId(workBook.getId())) {
+                Long questionInfoId = workBookInfo.getQuestionInfo().getId();
+                Question question = questionRepository.findByMemberIdAndQuestionInfoId(member.getId(), questionInfoId).get();
+                if (!question.getDel())
+                    totalQuestion++;
+            }
 
+            GetWorkBookResponse getWorkBookResponse = new GetWorkBookResponse();
             getWorkBookResponse.setEncryptedWorkBookId(encryptionService.encryptPrimaryKey(workBook.getId()));
             getWorkBookResponse.setName(workBook.getName());
-
-            getWorkBookRespons.add(getWorkBookResponse);
+            getWorkBookResponse.setRecentSolvedDate(workBook.getRecentSolveDate());
+            getWorkBookResponse.setTotalQuestion(totalQuestion);
+            getWorkBookResponses.add(getWorkBookResponse);
         }
 
-        return getWorkBookRespons;
+        return getWorkBookResponses;
     }
 
     public List<GetQuestionsByWorkBookResponse> searchQuestionsByWorkBook(String token, GetQuestionsByWorkBookRequest request) throws Exception {
