@@ -18,7 +18,7 @@ public class QuestionInfo {
     @Column(name = "question_info_id")
     private Long id;
 
-    @Column(columnDefinition = "VARCHAR(100)")
+    @Column(columnDefinition = "VARCHAR(300)")
     private String name; // 문제 이름
 
     @Enumerated(EnumType.STRING)
