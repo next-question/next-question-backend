@@ -16,7 +16,7 @@ public class SolvingController {
 
     private final SolvingService solvingService;
 
-    @GetMapping("/solving/normal/search")
+    @PostMapping("/solving/normal/search")
     public ResponseEntity<?> searchQuestionsByNormalExam(
             @RequestHeader("Authorization") String token,
             @RequestBody FindQuestionsByNormalExamRequest request
@@ -34,7 +34,7 @@ public class SolvingController {
             return ResponseEntity.ok("문제 풀이 결과를 저장했습니다.");
     }
 
-    @GetMapping("/solving/mock/search")
+    @PostMapping("/solving/mock/search")
     public ResponseEntity<?> searchQuestionsByMockExam(
             @RequestHeader("Authorization") String token,
             @RequestBody FindQuestionsByMockExamRequest request
@@ -52,7 +52,7 @@ public class SolvingController {
             return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/solving/historyInfo/search")
+    @PostMapping("/solving/historyInfo/search")
     public ResponseEntity<?> findHistoryInfoByHistory(
             @RequestHeader("Authorization") String token,
             @RequestBody FindHistoryInfoByHistoryRequest request
