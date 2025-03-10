@@ -201,7 +201,7 @@ public class SolvingService {
     }
 
     @Transactional
-    public void saveHistoryByNormalExam(String token, SaveHistoryByNormalExamRequest request) throws Exception {
+    public void saveHistoryByExam(String token, SaveHistoryByExamRequest request) throws Exception {
         String userId = jwtUtility.getUserIdFromToken(token);
 
         Member member = localMemberRepository.findByUserId(userId)
@@ -216,9 +216,11 @@ public class SolvingService {
 
         History savedHistory = historyRepository.save(history);
 
-        List<NormalExamInfoDTO> infos = request.getInfo();
+        WorkBook workBook = workBookRepository.findById(encryptionService.decryptPrimaryKey(request.getEncryptedWorkBookId())).get();
+        workBook.setRecentSolveDate(new Timestamp(System.currentTimeMillis()));
 
-        for (NormalExamInfoDTO info : infos) {
+        List<ExamInfoDTO> infos = request.getInfo();
+        for (ExamInfoDTO info : infos) {
             Long questionId = encryptionService.decryptPrimaryKey(info.getEncryptedQuestionId());
             Question question = questionRepository.findById(questionId).get();
 

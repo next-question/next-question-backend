@@ -30,12 +30,12 @@ public class SolvingController {
     }
 
     @PostMapping("/solving/save")
-    public ResponseEntity<?> saveHistoryByNormalExam(
+    public ResponseEntity<?> saveHistoryByExam(
             @RequestHeader("Authorization") String token,
-            @RequestBody SaveHistoryByNormalExamRequest request
+            @RequestBody SaveHistoryByExamRequest request
     ){
         try{
-            solvingService.saveHistoryByNormalExam(token, request);
+            solvingService.saveHistoryByExam(token, request);
             return ResponseEntity.ok("문제 풀이 결과를 저장했습니다.");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
