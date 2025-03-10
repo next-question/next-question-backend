@@ -173,20 +173,27 @@ public class SolvingService {
 
         Long workBookId = encryptionService.decryptPrimaryKey(request.getEncryptedWorkBookId());
 
-        if (!workBookRepository.existsByIdAndMemberId(workBookId, member.getId())) {
+        if (!workBookRepository.existsByIdAndMemberId(workBookId, member.getId())){
             throw new AccessDeniedException("사용자가 소유한 문제집이 아닙니다.");
         }
         List<WorkBookInfo> workBookInfos = workBookInfoRepository.findAllByWorkBookId(workBookId);
-        if (workBookInfos.size() < request.getOptions().getCount()) {
+        List<Question> requestedQuestions = new ArrayList<>();
+        for (WorkBookInfo workBookInfo : workBookInfos) {
+            Long questionInfoId = workBookInfo.getQuestionInfo().getId();
+            Question question = questionRepository.findByMemberIdAndQuestionInfoId(member.getId(), questionInfoId).get();
+            if (question.getDel())
+                continue;
+            requestedQuestions.add(question);
+        }
+
+        if (requestedQuestions.size() < request.getOptions().getCount()){
             throw new IllegalArgumentException("문제집의 문제 수가 선택한 수보다 적습니다.");
         }
         List<FindQuestionsByMockExamResponse> response = new ArrayList<>();
-        Collections.shuffle(workBookInfos);
-        List<WorkBookInfo> selectedWorkBookInfos = workBookInfos.subList(0, request.getOptions().getCount());
-        for (WorkBookInfo selectedWorkBookInfo : selectedWorkBookInfos) {
-            QuestionInfo questionInfo = selectedWorkBookInfo.getQuestionInfo();
-            Question question = questionRepository.findByMemberIdAndQuestionInfoIdAndDelFalse(
-                    member.getId(), questionInfo.getId()).get();
+        Collections.shuffle(requestedQuestions);
+        List<Question> selectedQuestions = requestedQuestions.subList(0, request.getOptions().getCount());
+        for (Question question : selectedQuestions) {
+            QuestionInfo questionInfo = question.getQuestionInfo();
 
             FindQuestionsByMockExamResponse selectedQuestion = new FindQuestionsByMockExamResponse();
             selectedQuestion.setEncryptedQuestionId(encryptionService.encryptPrimaryKey(question.getId()));
