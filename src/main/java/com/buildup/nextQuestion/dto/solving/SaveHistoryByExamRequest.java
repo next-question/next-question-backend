@@ -10,8 +10,9 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class SaveHistoryByNormalExamRequest {
+public class SaveHistoryByExamRequest {
     private SolvedType type;
-    private List<NormalExamInfoDTO> info;
+    private String encryptedWorkBookId;
+    private List<ExamInfoDTO> info;
 
 }

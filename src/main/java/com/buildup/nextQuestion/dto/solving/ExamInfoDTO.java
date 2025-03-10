@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class NormalExamInfoDTO {
+public class ExamInfoDTO {
     private String encryptedQuestionId;
     private Boolean wrong;
 }
