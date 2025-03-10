@@ -21,7 +21,7 @@ public class QuestionController {
     private final FileService fileService;
 
 
-    @PostMapping("public/question/upload")
+    @PostMapping("public/questions/upload")
     public ResponseEntity<?> uploadFileByGuest(@RequestPart MultipartFile file) throws IOException {
             fileService.validateFile(file);
 
