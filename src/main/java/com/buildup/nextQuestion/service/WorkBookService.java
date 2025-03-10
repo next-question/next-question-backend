@@ -43,7 +43,7 @@ public class WorkBookService {
                 .getMember();
         String requestedWorkBookName = request.getWorkBookName();
 
-        List<WorkBook> infos = workBookRepository.findByName(requestedWorkBookName);
+        List<WorkBook> infos = workBookRepository.findByNameAndMemberId(requestedWorkBookName, member.getId());
         if (!infos.isEmpty()) {
             throw new DuplicateResourceException("이미 존재하는 문제집입니다.");
         }
@@ -189,7 +189,7 @@ public class WorkBookService {
 
         String requestedWorkBookName = request.getName();
 
-        List<WorkBook> infos = workBookRepository.findByName(requestedWorkBookName);
+        List<WorkBook> infos = workBookRepository.findByNameAndMemberId(requestedWorkBookName, member.getId());
         if (!infos.isEmpty()) {
             throw new DuplicateResourceException("이미 존재하는 문제집입니다.");
         }
