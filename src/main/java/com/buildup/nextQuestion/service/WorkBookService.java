@@ -74,8 +74,8 @@ public class WorkBookService {
 
 
         List<GetWorkBookResponse> getWorkBookResponses = new ArrayList<>();
-        int totalQuestion = 0;
         for (WorkBook workBook : workBooks) {
+            int totalQuestion = 0;
             for (WorkBookInfo workBookInfo : workBookInfoRepository.findAllByWorkBookId(workBook.getId())) {
                 Long questionInfoId = workBookInfo.getQuestionInfo().getId();
                 Question question = questionRepository.findByMemberIdAndQuestionInfoId(member.getId(), questionInfoId).get();
