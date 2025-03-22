@@ -38,7 +38,7 @@ public class SocialMemberService {
 
     public String loginUrlGoogle(){
         String reqUrl = "https://accounts.google.com/o/oauth2/v2/auth?client_id=" + googleClientId
-                + "&redirect_uri=http://localhost:8080/public/oauth2/google&response_type=code&scope=email%20profile%20openid&access_type=offline&prompt=consent";
+                + "&redirect_uri=http://localhost:8080/google/callback&response_type=code&scope=email%20profile%20openid&access_type=offline&prompt=consent";
         return reqUrl;
     }
 
@@ -49,7 +49,7 @@ public class SocialMemberService {
                 .clientId(googleClientId)
                 .clientSecret(googleClientPw)
                 .code(authCode)
-                .redirectUri("http://localhost:8080/public/oauth2/google")
+                .redirectUri("http://localhost:8080/google/callback")
                 .grantType("authorization_code").build();
         //해당 코드를 이용해 인증을 받아옴
         ResponseEntity<GoogleResponse> resultEntity = restTemplate.postForEntity("https://oauth2.googleapis.com/token",
