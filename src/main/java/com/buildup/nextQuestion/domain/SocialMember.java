@@ -1,5 +1,7 @@
 package com.buildup.nextQuestion.domain;
 
+import com.buildup.nextQuestion.domain.enums.LoginType;
+import com.buildup.nextQuestion.domain.enums.Role;
 import com.buildup.nextQuestion.domain.enums.SocialType;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -14,9 +16,6 @@ public class SocialMember {
     @Column(name = "social_member_id")
     private Long id;
 
-    @Column(columnDefinition = "VARCHAR(15)")
-    private String userId;
-
     @Column(columnDefinition = "VARCHAR(100)")
     private String snsId;
 
@@ -26,4 +25,13 @@ public class SocialMember {
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "member_id")
     private Member member;
+
+    public SocialMember(String snsId, SocialType socialType, Member member) {
+        this.snsId = snsId;
+        this.socialType = socialType;
+        this.member = member;
+    }
+
+    public SocialMember() {
+    }
 }
