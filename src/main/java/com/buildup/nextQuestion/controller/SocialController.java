@@ -25,7 +25,8 @@ public class SocialController {
 
     // 구글 인증 후 받은 authCode를 처리하는 엔드포인트
     @PostMapping("public/oauth2/google/callback")
-    public ResponseEntity<?> login(@RequestParam("code") String authCode) {
+    public ResponseEntity<?> login(@RequestParam("code") String code) throws Exception {
+        String authCode = socialMemberService.decodeCode(code);
         String snsId = socialMemberService.authGoogle(authCode);  // authCode로 snsId 추출
         if (socialMemberRepository.existsBySnsId(snsId)) {
             LoginResponse response = socialMemberService.loginGoogle(snsId);
