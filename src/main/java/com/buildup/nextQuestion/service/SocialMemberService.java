@@ -5,10 +5,10 @@ import com.buildup.nextQuestion.domain.SocialMember;
 import com.buildup.nextQuestion.domain.enums.LoginType;
 import com.buildup.nextQuestion.domain.enums.SocialType;
 import com.buildup.nextQuestion.dto.member.LoginResponse;
-import com.buildup.nextQuestion.dto.member.RegistRequest;
 import com.buildup.nextQuestion.dto.google.GoogleInfResponse;
 import com.buildup.nextQuestion.dto.google.GoogleRequest;
 import com.buildup.nextQuestion.dto.google.GoogleResponse;
+import com.buildup.nextQuestion.dto.member.SocialRegistRequest;
 import com.buildup.nextQuestion.repository.MemberRepository;
 import com.buildup.nextQuestion.repository.SocialMemberRepository;
 import com.buildup.nextQuestion.utility.JwtUtility;
@@ -17,7 +17,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
@@ -73,7 +72,7 @@ public class SocialMemberService {
     }
 
     @Transactional
-    public void registerGoogle(RegistRequest registDTORequest) {
+    public void registerGoogle(SocialRegistRequest registDTORequest) {
         String userId = registDTORequest.getUserId();
         String nickname = registDTORequest.getNickname();
         // 중복 체크

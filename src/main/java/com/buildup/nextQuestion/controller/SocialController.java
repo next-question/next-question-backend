@@ -1,12 +1,10 @@
 package com.buildup.nextQuestion.controller;
 
 import com.buildup.nextQuestion.dto.member.LoginResponse;
-import com.buildup.nextQuestion.dto.member.RegistRequest;
+import com.buildup.nextQuestion.dto.member.SocialRegistRequest;
 import com.buildup.nextQuestion.repository.SocialMemberRepository;
-import com.buildup.nextQuestion.service.MemberService;
 import com.buildup.nextQuestion.service.SocialMemberService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -38,7 +36,7 @@ public class SocialController {
     }
 
     @PostMapping("public/member/regist/social/google")
-    public ResponseEntity<?> register(@RequestBody RegistRequest registDTORequest) {
+    public ResponseEntity<?> register(@RequestBody SocialRegistRequest registDTORequest) {
         socialMemberService.registerGoogle(registDTORequest);
         return ResponseEntity.status(HttpStatus.CREATED).body("회원가입에 성공했습니다.");
     }
