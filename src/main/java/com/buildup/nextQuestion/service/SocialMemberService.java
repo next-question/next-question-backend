@@ -51,11 +51,14 @@ public class SocialMemberService {
                 .code(authCode)
                 .redirectUri("http://localhost:8080/public/oauth2/google")
                 .grantType("authorization_code").build();
+        //해당 코드를 이용해 인증을 받아옴
         ResponseEntity<GoogleResponse> resultEntity = restTemplate.postForEntity("https://oauth2.googleapis.com/token",
                 googleOAuthRequestParam, GoogleResponse.class);
+        //인증 토큰 활용해 구글에서 사용할 jwtToken 발급
         String jwtToken = resultEntity.getBody().getId_token();
         Map<String, String> map = new HashMap<>();
         map.put("id_token", jwtToken);
+        //jwtToken을 이용해 유저 정보 찾아옴
         ResponseEntity<GoogleInfResponse> resultEntity2 = restTemplate.postForEntity("https://oauth2.googleapis.com/tokeninfo",
                 map, GoogleInfResponse.class);
 
