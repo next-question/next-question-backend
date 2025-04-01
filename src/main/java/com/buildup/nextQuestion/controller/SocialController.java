@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequiredArgsConstructor
 public class SocialController {
@@ -32,7 +34,7 @@ public class SocialController {
             LoginResponse response = socialMemberService.loginGoogle(snsId);
             return ResponseEntity.ok(response);  // 로그인 응답 반환
         } else {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("아이디가 존재하지 않습니다. 회원가입을 진행해 주세요.");
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("snsId", snsId, "error", "아아디가 존재하지 않습니다. 회원가입을 진행해 주세요."));
         }
     }
 
