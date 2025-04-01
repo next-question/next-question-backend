@@ -1,5 +1,6 @@
 package com.buildup.nextQuestion.controller;
 
+import com.buildup.nextQuestion.dto.google.AuthRequest;
 import com.buildup.nextQuestion.dto.member.LoginResponse;
 import com.buildup.nextQuestion.dto.member.SocialRegistRequest;
 import com.buildup.nextQuestion.repository.SocialMemberRepository;
@@ -27,8 +28,8 @@ public class SocialController {
 
     // 구글 인증 후 받은 authCode를 처리하는 엔드포인트
     @PostMapping("public/oauth2/google/callback")
-    public ResponseEntity<?> login(@RequestParam("code") String code) throws Exception {
-        String authCode = socialMemberService.decodeCode(code);
+    public ResponseEntity<?> login(@RequestBody AuthRequest authRequest) throws Exception {
+        String authCode = socialMemberService.decodeCode(authRequest.getCode());
         String snsId = socialMemberService.authGoogle(authCode);  // authCode로 snsId 추출
         if (socialMemberRepository.existsBySnsId(snsId)) {
             LoginResponse response = socialMemberService.loginGoogle(snsId);
