@@ -18,5 +18,4 @@ public class FindQuestionByMemberResponse {
     private String opt;
     private Timestamp createTime;
     private Timestamp recentSolveTime;
-
 }
