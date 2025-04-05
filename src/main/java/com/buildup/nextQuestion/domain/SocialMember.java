@@ -7,6 +7,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDate;
+
 @Entity
 @Getter @Setter
 @Table(name = "social_member")
@@ -26,10 +28,13 @@ public class SocialMember {
     @JoinColumn(name = "member_id")
     private Member member;
 
+    private LocalDate createDate;
+
     public SocialMember(String snsId, SocialType socialType, Member member) {
         this.snsId = snsId;
         this.socialType = socialType;
         this.member = member;
+        this.createDate = LocalDate.now();
     }
 
     public SocialMember() {

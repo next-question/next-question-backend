@@ -16,7 +16,25 @@ public class SolvingController {
 
     private final SolvingService solvingService;
 
-    @PostMapping("/solving/normal/search")
+    @GetMapping("member/solving/daily/search")
+    public ResponseEntity<?> searchDailyQuestions(
+            @RequestHeader("Authorization") String token
+    ) throws Exception {
+        List<GetOrAssignTodayQuestionsResponse> response = solvingService.getOrAssignTodayQuestions(token);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("member/solving/daily/check")
+    public ResponseEntity<?> recordAttendance(
+            @RequestHeader("Authorization") String token,
+            @RequestBody List<RecordAttendanceRequest> requests
+    ) throws Exception {
+        solvingService.recordAttendance(token,requests);
+        return ResponseEntity.ok("출석 체크 되었습니다.");
+    }
+
+
+    @PostMapping("member/solving/normal/search")
     public ResponseEntity<?> searchQuestionsByNormalExam(
             @RequestHeader("Authorization") String token,
             @RequestBody FindQuestionsByNormalExamRequest request
@@ -25,7 +43,7 @@ public class SolvingController {
             return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/solving/save")
+    @PostMapping("member/solving/save")
     public ResponseEntity<?> saveHistoryByExam(
             @RequestHeader("Authorization") String token,
             @RequestBody SaveHistoryByExamRequest request
@@ -34,7 +52,7 @@ public class SolvingController {
             return ResponseEntity.ok("문제 풀이 결과를 저장했습니다.");
     }
 
-    @PostMapping("/solving/mock/search")
+    @PostMapping("member/solving/mock/search")
     public ResponseEntity<?> searchQuestionsByMockExam(
             @RequestHeader("Authorization") String token,
             @RequestBody FindQuestionsByMockExamRequest request
@@ -44,7 +62,7 @@ public class SolvingController {
     }
 
 
-    @GetMapping("/solving/histories/search")
+    @GetMapping("member/solving/histories/search")
     public ResponseEntity<?> saveHistoryByNormalExam(
             @RequestHeader("Authorization") String token
     ) throws Exception {
@@ -52,7 +70,7 @@ public class SolvingController {
             return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/solving/historyInfo/search")
+    @PostMapping("member/solving/historyInfo/search")
     public ResponseEntity<?> findHistoryInfoByHistory(
             @RequestHeader("Authorization") String token,
             @RequestBody FindHistoryInfoByHistoryRequest request

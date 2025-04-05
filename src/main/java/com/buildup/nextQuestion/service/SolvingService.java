@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.file.AccessDeniedException;
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.util.*;
 
 @Service
@@ -29,6 +30,7 @@ public class SolvingService {
     private final WorkBookRepository workBookRepository;
     private final WorkBookInfoRepository workBookInfoRepository;
     private final QuestionRepository questionRepository;
+    private final AttendanceRepository attendanceRepository;
 
 
     @Transactional
@@ -295,4 +297,132 @@ public class SolvingService {
         }
         return responses;
     }
+
+    @Transactional
+    public List<GetOrAssignTodayQuestionsResponse> getOrAssignTodayQuestions(String token) throws Exception {
+        LocalDate today = LocalDate.now();
+
+        String userId = jwtUtility.getUserIdFromToken(token);
+
+        // 사용자 조회
+        Member member = localMemberRepository.findByUserId(userId)
+                .orElseThrow(() -> new EntityNotFoundException("해당 멤버를 찾을 수 없습니다."))
+                .getMember();
+
+
+        List<GetOrAssignTodayQuestionsResponse> responses = new ArrayList<>();
+
+        // 이미 오늘 제공된 문제가 있다면 그대로 반환
+        List<Question> todayQuestions = questionRepository.findByMemberAndAssignedDate(member, today);
+        if (!todayQuestions.isEmpty()) {
+            for (Question q : todayQuestions) {
+                GetOrAssignTodayQuestionsResponse response = new GetOrAssignTodayQuestionsResponse();
+                response.setEncryptedQuestionId(encryptionService.encryptPrimaryKey(q.getId()));
+                response.setName(q.getQuestionInfo().getName());
+                response.setType(q.getQuestionInfo().getType());
+                response.setAnswer(q.getQuestionInfo().getAnswer());
+                response.setOpt(q.getQuestionInfo().getOption());
+                response.setWrong(q.getWrong());
+                response.setRecentSolveTime(q.getRecentSolveTime());
+
+                q.setAssignedDate(today);
+                responses.add(response);
+            }
+
+
+            return responses;
+        }
+
+        // 사용자가 보유한 문제 중 삭제되지 않은 것만 필터링
+        List<Question> ownedQuestions = questionRepository.findAllByMemberId(member.getId()).stream()
+                .filter(q -> !q.getDel())
+                .toList();
+
+        if (ownedQuestions.isEmpty()) {
+            throw new IllegalStateException("사용자가 학습 중인 문제가 없습니다.");
+        }
+
+        // QuestionInfo 단위로 중복 제거 (같은 문제 여러 개 가지고 있을 수 있으니까)
+        Map<Long, Question> latestByInfoId = new HashMap<>();
+        for (Question q : ownedQuestions) {
+            Long infoId = q.getQuestionInfo().getId();
+            if (!latestByInfoId.containsKey(infoId) || isOlder(q, latestByInfoId.get(infoId))) {
+                latestByInfoId.put(infoId, q);
+            }
+        }
+
+        List<Question> uniqueQuestions = new ArrayList<>(latestByInfoId.values());
+
+        // 최근 학습 시간 기준 오름차순 정렬 (recentSolveTime이 null이면 가장 먼저)
+        uniqueQuestions.sort(Comparator.comparing(
+                Question::getRecentSolveTime,
+                Comparator.nullsFirst(Comparator.naturalOrder())
+        ));
+
+        // 최대 3개 선택
+        List<Question> selected = uniqueQuestions.stream()
+                .limit(3)
+                .toList();
+
+
+
+        // assignedDate 설정 (오늘 제공된 문제로 표시)
+        for (Question q : selected) {
+            GetOrAssignTodayQuestionsResponse response = new GetOrAssignTodayQuestionsResponse();
+            response.setEncryptedQuestionId(encryptionService.encryptPrimaryKey(q.getId()));
+            response.setName(q.getQuestionInfo().getName());
+            response.setType(q.getQuestionInfo().getType());
+            response.setAnswer(q.getQuestionInfo().getAnswer());
+            response.setOpt(q.getQuestionInfo().getOption());
+            response.setWrong(q.getWrong());
+            response.setRecentSolveTime(q.getRecentSolveTime());
+
+            q.setAssignedDate(today);
+            responses.add(response);
+        }
+
+        return responses;
+    }
+
+    @Transactional
+    public void recordAttendance(String token, List<RecordAttendanceRequest> requests) throws Exception {
+        LocalDate today = LocalDate.now();
+
+        String userId = jwtUtility.getUserIdFromToken(token);
+
+        // 사용자 조회
+        Member member = localMemberRepository.findByUserId(userId)
+                .orElseThrow(() -> new EntityNotFoundException("해당 멤버를 찾을 수 없습니다."))
+                .getMember();
+
+        // 이미 출석 기록이 있는지 확인
+        boolean alreadyChecked = attendanceRepository.existsByMemberAndDate(member, today);
+        if (alreadyChecked){
+            throw new IllegalArgumentException("이미 출석처리 되었습니다.");
+        }
+
+        // 문제 풀이 처리
+        for (RecordAttendanceRequest request : requests) {
+            Long questionId = encryptionService.decryptPrimaryKey(request.getEncryptedQuestionId());
+            Question question = questionRepository.findById(questionId).get();
+            question.setWrong(request.isWrong());
+            question.setRecentSolveTime(new Timestamp(System.currentTimeMillis()));
+        }
+
+        // 출석 기록 저장
+        Attendance attendance = new Attendance();
+        attendance.setMember(member);
+        attendance.setDate(today);
+        attendance.setCheckedTime(new Timestamp(System.currentTimeMillis()));
+        attendanceRepository.save(attendance);
+    }
+
+    private boolean isOlder(Question a, Question b) {
+        Timestamp aTime = a.getRecentSolveTime();
+        Timestamp bTime = b.getRecentSolveTime();
+        if (aTime == null) return true;
+        if (bTime == null) return false;
+        return aTime.before(bTime);
+    }
+
 }
