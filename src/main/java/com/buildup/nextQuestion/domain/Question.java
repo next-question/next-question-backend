@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.time.LocalTime;
 
 @Entity
@@ -33,6 +34,8 @@ public class Question {
 
     private LocalTime createTime; // 생성 시간
 
+    private LocalDate assignedDate; // 일일 문제 제공 날짜
+
     public Question(Member member, QuestionInfo questionInfo) {
         this.wrong = false;
         this.del = false;
@@ -40,6 +43,7 @@ public class Question {
         this.questionInfo = questionInfo;
         this.recentSolveTime = null;
         this.createTime = LocalTime.now();
+        this.assignedDate = null;
 
     }
 }
