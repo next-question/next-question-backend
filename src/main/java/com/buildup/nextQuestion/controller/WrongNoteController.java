@@ -2,7 +2,6 @@ package com.buildup.nextQuestion.controller;
 
 import com.buildup.nextQuestion.dto.wrongNote.FindQuestionsByWrongNoteRequest;
 import com.buildup.nextQuestion.dto.wrongNote.FindQuestionsByWrongNoteResponse;
-import com.buildup.nextQuestion.service.SolvingService;
 import com.buildup.nextQuestion.service.WrongNoteService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +22,7 @@ public class WrongNoteController {
             @RequestHeader("Authorization") String token,
             @RequestBody FindQuestionsByWrongNoteRequest request
     ) throws Exception {
-        List<FindQuestionsByWrongNoteResponse> response = wrongNoteService.findQuestionsByWrongNote(token, request);
+        FindQuestionsByWrongNoteResponse response = wrongNoteService.findQuestionsByWrongNote(token, request);
         return ResponseEntity.ok(response);
     }
 
