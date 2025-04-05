@@ -30,6 +30,7 @@ public class SolvingService {
     private final WorkBookRepository workBookRepository;
     private final WorkBookInfoRepository workBookInfoRepository;
     private final QuestionRepository questionRepository;
+    private final AttendanceRepository attendanceRepository;
 
 
     @Transactional
@@ -381,6 +382,39 @@ public class SolvingService {
         }
 
         return responses;
+    }
+
+    @Transactional
+    public void recordAttendance(String token, List<RecordAttendanceRequest> requests) throws Exception {
+        LocalDate today = LocalDate.now();
+
+        String userId = jwtUtility.getUserIdFromToken(token);
+
+        // 사용자 조회
+        Member member = localMemberRepository.findByUserId(userId)
+                .orElseThrow(() -> new EntityNotFoundException("해당 멤버를 찾을 수 없습니다."))
+                .getMember();
+
+        // 이미 출석 기록이 있는지 확인
+        boolean alreadyChecked = attendanceRepository.existsByMemberAndDate(member, today);
+        if (alreadyChecked){
+            throw new IllegalArgumentException("이미 출석처리 되었습니다.");
+        }
+
+        // 문제 풀이 처리
+        for (RecordAttendanceRequest request : requests) {
+            Long questionId = encryptionService.decryptPrimaryKey(request.getEncryptedQuestionId());
+            Question question = questionRepository.findById(questionId).get();
+            question.setWrong(request.isWrong());
+            question.setRecentSolveTime(new Timestamp(System.currentTimeMillis()));
+        }
+
+        // 출석 기록 저장
+        Attendance attendance = new Attendance();
+        attendance.setMember(member);
+        attendance.setDate(today);
+        attendance.setCheckedTime(new Timestamp(System.currentTimeMillis()));
+        attendanceRepository.save(attendance);
     }
 
     private boolean isOlder(Question a, Question b) {

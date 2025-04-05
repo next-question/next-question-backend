@@ -24,6 +24,15 @@ public class SolvingController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("member/solving/daily/check")
+    public ResponseEntity<?> recordAttendance(
+            @RequestHeader("Authorization") String token,
+            @RequestBody List<RecordAttendanceRequest> requests
+    ) throws Exception {
+        solvingService.recordAttendance(token,requests);
+        return ResponseEntity.ok("출석 체크 되었습니다.");
+    }
+
 
     @PostMapping("member/solving/normal/search")
     public ResponseEntity<?> searchQuestionsByNormalExam(
