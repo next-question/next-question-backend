@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -17,5 +18,5 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
     Optional<Question> findByMemberIdAndQuestionInfoId(Long memberId, Long questionInfoId);
     Optional<Question> findByMemberIdAndQuestionInfoIdAndDelFalse(Long memberId, Long questionInfoId);
 
-    List<Question> findByMemberIdAndDelFalseAndWrongTrueAndRecentSolveTimeBetween(Long memberId, Date startDate, Date endDate);
+    List<Question> findByMemberIdAndDelFalseAndWrongTrueAndRecentSolveTimeBetween(Long memberId, LocalDateTime startDate, LocalDateTime endDate);
 }

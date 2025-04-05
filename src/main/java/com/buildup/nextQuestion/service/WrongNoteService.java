@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.buildup.nextQuestion.dto.wrongNote.*;
 
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.time.LocalDate;
 
@@ -58,8 +59,8 @@ public class WrongNoteService {
             endLocalDate = LocalDate.now();
         }
 
-        Date startDate = java.sql.Timestamp.valueOf(startLocalDate.atStartOfDay());
-        Date endDate = java.sql.Timestamp.valueOf(endLocalDate.atTime(23, 59, 59));
+        LocalDateTime startDate = startLocalDate.atStartOfDay();
+        LocalDateTime endDate = endLocalDate.atTime(23, 59, 59);
 
         //오답 문제 리스트
         List<Question> wrongQuestions = questionRepository.findByMemberIdAndDelFalseAndWrongTrueAndRecentSolveTimeBetween(
