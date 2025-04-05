@@ -72,7 +72,6 @@ public class MemberService {
                 .getMember();
 
         AttendanceResponse response = new AttendanceResponse();
-        response.setDate(today);
         response.setHasAttended(false);
         if (attendanceRepository.existsByMemberAndDate(member, today)){
             response.setHasAttended(true);
@@ -88,12 +87,10 @@ public class MemberService {
                 .orElseThrow(() -> new EntityNotFoundException("해당 멤버를 찾을 수 없습니다."))
                 .getMember();
 
-        List<AttendanceResponse> attendances = new ArrayList<>();
+        List<String> attendances = new ArrayList<>();
 
         for (Attendance attendance : attendanceRepository.findAllByMember(member)) {
-            AttendanceResponse requestedAttendance = new AttendanceResponse();
-            requestedAttendance.setDate(attendance.getDate());
-            requestedAttendance.setHasAttended(true);
+            String requestedAttendance = attendance.getDate().toString();
             attendances.add(requestedAttendance);
         }
 

@@ -12,5 +12,5 @@ import java.util.List;
 @NoArgsConstructor
 public class FindTodayAttendanceResponse {
     private LocalDate createDate;
-    private List<AttendanceResponse> attendances;
+    private List<String> attendances;
 }

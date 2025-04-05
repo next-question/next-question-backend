@@ -11,6 +11,5 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @NoArgsConstructor
 public class AttendanceResponse {
-    private LocalDate date;
     private boolean hasAttended;
 }
