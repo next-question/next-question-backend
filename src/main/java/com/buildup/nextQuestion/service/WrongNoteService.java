@@ -70,10 +70,20 @@ public class WrongNoteService {
             throw new IllegalArgumentException("해당 문제를 찾을 수 없습니다.");
         }
 
+        //중복 제거(최신 문제만 남김)
+        Map<Long, Question> latestByInfoId = new HashMap<>();
+        for (Question q : wrongQuestions) {
+            Long infoId = q.getQuestionInfo().getId();
+            if (!latestByInfoId.containsKey(infoId) || q.getRecentSolveTime().after(latestByInfoId.get(infoId).getRecentSolveTime())) {
+                latestByInfoId.put(infoId, q);
+            }
+        }
+        List<Question> uniqueQuestions = new ArrayList<>(latestByInfoId.values());
+
         // 응답 생성
         List<FindQuestionsByWrongNoteDTO> result = new ArrayList<>();
 
-        for (Question question : wrongQuestions) {
+        for (Question question : uniqueQuestions) {
             QuestionInfo questionInfo = question.getQuestionInfo();
 
             FindQuestionsByWrongNoteDTO selectedQuestion = new FindQuestionsByWrongNoteDTO();
