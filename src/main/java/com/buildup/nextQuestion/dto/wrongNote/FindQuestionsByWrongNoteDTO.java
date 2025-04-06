@@ -16,6 +16,7 @@ public class FindQuestionsByWrongNoteDTO {
     private QuestionType type;
     private String answer;
     private String opt;
-    private Timestamp createTime;
+    private Timestamp solvedDate;
     private Timestamp recentSolveTime;
+
 }

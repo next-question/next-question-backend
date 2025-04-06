@@ -99,6 +99,7 @@ public class WrongNoteService {
             selectedQuestion.setAnswer(questionInfo.getAnswer());
             selectedQuestion.setOpt(questionInfo.getOption());
             selectedQuestion.setRecentSolveTime(question.getRecentSolveTime());
+            selectedQuestion.setSolvedDate(historyInfo.getHistory().getSolvedDate());
 
             result.add(selectedQuestion);
         }
