@@ -1,23 +1,27 @@
 package com.buildup.nextQuestion.dto.gpt;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class ChatGPTResponse {
     private List<Choice> choices;
 
     @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
     public static class Choice {
-        private int index;
         private Message message;
+    }
 
+    @Data
+    public static class Message {
+        private String role;
+        private FunctionCall function_call;
+    }
+
+    @Data
+    public static class FunctionCall {
+        private String name;
+        private String arguments;
     }
 }
