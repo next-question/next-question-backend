@@ -30,6 +30,12 @@ public class Member {
 
     private Role role;
 
+    @Column(unique = true)
+    private String refreshToken;
+
+    @Column
+    private Date expiryDate;
+
     public Member(String nickname, LoginType logintype) {
         this.nickname = nickname;
         this.logintype = logintype;

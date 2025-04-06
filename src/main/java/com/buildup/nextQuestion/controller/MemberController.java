@@ -5,6 +5,8 @@ import com.buildup.nextQuestion.domain.LocalMember;
 import com.buildup.nextQuestion.dto.member.*;
 import com.buildup.nextQuestion.service.LocalMemberService;
 import com.buildup.nextQuestion.service.MemberService;
+import com.buildup.nextQuestion.service.security.RefreshTokenService;
+import com.buildup.nextQuestion.service.security.SecurityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +22,14 @@ public class MemberController {
 
     private final LocalMemberService localMemberService;
     private final MemberService memberService;
+    private final SecurityService securityService;
+
+    @GetMapping("public/member/refresh")
+    public ResponseEntity<?> refreshAccessToken(
+            @RequestHeader("Authorization") String refreshToken) throws Exception {
+        String newAccessToken = securityService.refreshAccessToken(refreshToken.substring(7));
+        return ResponseEntity.ok(newAccessToken);
+    }
 
     @PostMapping("public/member/regist")
     public ResponseEntity<String> register(@RequestBody RegistRequest registDTORequest) {

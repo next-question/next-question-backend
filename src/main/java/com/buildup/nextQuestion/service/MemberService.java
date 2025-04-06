@@ -3,7 +3,6 @@ package com.buildup.nextQuestion.service;
 import com.buildup.nextQuestion.domain.Attendance;
 import com.buildup.nextQuestion.domain.LocalMember;
 import com.buildup.nextQuestion.domain.Member;
-import com.buildup.nextQuestion.domain.enums.LoginType;
 import com.buildup.nextQuestion.dto.member.*;
 import com.buildup.nextQuestion.repository.AttendanceRepository;
 import com.buildup.nextQuestion.repository.LocalMemberRepository;
@@ -11,17 +10,17 @@ import com.buildup.nextQuestion.repository.MemberRepository;
 import com.buildup.nextQuestion.utility.JwtUtility;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.hibernate.annotations.processing.Find;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.buildup.nextQuestion.service.security.RefreshTokenService;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
-@Transactional(readOnly=true)
+@Transactional
 @RequiredArgsConstructor
 public class MemberService {
 
@@ -31,6 +30,7 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final EncryptionService encryptionService;
     private final AttendanceRepository attendanceRepository;
+    private final RefreshTokenService refreshTokenService;
 
     public LoginResponse login(LoginRequest loginDTOrequest) {
         String userId = loginDTOrequest.getUserId();
@@ -40,7 +40,7 @@ public class MemberService {
         Member member = localMember.getMember();
         // 2. 비밀번호 검증
         if (passwordEncoder.matches(password, localMember.getPassword())) {
-            LoginResponse loginDTOresponse = new LoginResponse(jwtUtility.generateToken(userId, member.getRole()), member.getNickname(), member.getRole());
+            LoginResponse loginDTOresponse = new LoginResponse(refreshTokenService.createRefreshToken(member), jwtUtility.generateToken(userId, member.getRole()), member.getNickname(), member.getRole());
             // 3. JWT 토큰 생성 후 반환
             return loginDTOresponse;
         } else {
