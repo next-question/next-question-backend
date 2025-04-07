@@ -81,24 +81,43 @@ public class QuestionService {
         WorkBook workBook = workBookRepository.findById(workBookId)
                 .orElseThrow(() -> new EntityNotFoundException("해당 문제집을 찾을 수 없습니다."));
 
-        // 회원 문제집 저장
+        // 타입별 개수 초기화
+        int multipleChoiceCount = 0;
+        int fillInTheBlankCount = 0;
+        int oxCount = 0;
+
         for (String encryptedQuestionInfoId : request.getEncryptedQuestionInfoIds()) {
             Long questionInfoId = encryptionService.decryptPrimaryKey(encryptedQuestionInfoId);
             QuestionInfo questionInfo = questionInfoRepository.findById(questionInfoId)
                     .orElseThrow(() -> new EntityNotFoundException("해당 문제가 존재하지 않습니다."));
 
-            // 문제집에 동일한 문제가 이미 존재하는지 확인
+            // 중복 확인
             boolean isDuplicate = workBookInfoRepository.existsByWorkBookIdAndQuestionInfoId(workBook.getId(), questionInfoId);
             if (isDuplicate) {
                 throw new DuplicateResourceException("문제집에 이미 동일한 문제가 존재합니다.");
             }
 
+            // 문제 저장
             WorkBookInfo workBookInfo = new WorkBookInfo(questionInfo, workBook);
             Question question = new Question(member, questionInfo);
             questionRepository.save(question);
             workBookInfoRepository.save(workBookInfo);
+
+            // 타입별 개수 카운트
+            switch (questionInfo.getType()) {
+                case MULTIPLE_CHOICE -> multipleChoiceCount++;
+                case FILL_IN_THE_BLANK -> fillInTheBlankCount++;
+                case OX -> oxCount++;
+            }
         }
+
+        // WorkBook에 카운트 값 저장
+        workBook.setMultipleChoice(multipleChoiceCount);
+        workBook.setFillInTheBlank(fillInTheBlankCount);
+        workBook.setOx(oxCount);
+        workBookRepository.save(workBook);
     }
+
 
     @Transactional
     public List<FindQuestionByMemberResponse> findQuestionByMember(String token) throws Exception {

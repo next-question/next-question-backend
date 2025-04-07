@@ -23,5 +23,13 @@ public class WorkBook {
 
     private Timestamp recentSolveDate; // 문제집 최근 학습일
 
+    @Column(name = "multiple_choice")
+    private Integer multipleChoice;
+
+    private Integer ox;
+
+    @Column(name = "fill_in_the_blank")
+    private Integer fillInTheBlank;
+
 
 }
