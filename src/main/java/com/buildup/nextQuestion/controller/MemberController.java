@@ -50,7 +50,7 @@ public class MemberController {
     @GetMapping("member/attendences/find")
     public ResponseEntity<?> findAllAttendances (
             @RequestHeader("Authorization") String token) throws Exception {
-        FindTodayAttendanceResponse response = memberService.findAllAttendances(token);
+        List<String> response = memberService.findAllAttendances(token);
         return ResponseEntity.ok(response);
     }
 

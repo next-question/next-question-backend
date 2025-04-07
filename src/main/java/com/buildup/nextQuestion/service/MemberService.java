@@ -79,7 +79,7 @@ public class MemberService {
         return response;
     }
 
-    public FindTodayAttendanceResponse findAllAttendances(String token){
+    public List<String> findAllAttendances(String token){
         String userId = jwtUtility.getUserIdFromToken(token);
 
         // 사용자 조회
@@ -94,11 +94,7 @@ public class MemberService {
             attendances.add(requestedAttendance);
         }
 
-        LocalMember localMember = localMemberRepository.findByUserId(userId).get();
-        FindTodayAttendanceResponse response = new FindTodayAttendanceResponse();
-        response.setAttendances(attendances);
-        response.setCreateDate(localMember.getCreateDate());
-        return response;
+        return attendances;
     }
 
 }
