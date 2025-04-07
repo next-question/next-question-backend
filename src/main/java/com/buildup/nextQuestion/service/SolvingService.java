@@ -2,6 +2,7 @@ package com.buildup.nextQuestion.service;
 
 import com.buildup.nextQuestion.domain.*;
 import com.buildup.nextQuestion.domain.enums.QuestionType;
+import com.buildup.nextQuestion.dto.question.NormalExamOption;
 import com.buildup.nextQuestion.dto.solving.FindQuestionsByNormalExamResponse;
 import com.buildup.nextQuestion.dto.solving.*;
 import com.buildup.nextQuestion.repository.*;
@@ -9,6 +10,7 @@ import com.buildup.nextQuestion.utility.JwtUtility;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,136 +40,136 @@ public class SolvingService {
     public List<FindQuestionsByNormalExamResponse> findQuestionsByNormalExam(String token, FindQuestionsByNormalExamRequest request) throws Exception {
         String userId = jwtUtility.getUserIdFromToken(token);
 
-        // 사용자 조회
         Member member = localMemberRepository.findByUserId(userId)
                 .orElseThrow(() -> new EntityNotFoundException("해당 멤버를 찾을 수 없습니다."))
                 .getMember();
 
-        Long workBookId = encryptionService.decryptPrimaryKey(request.getEncryptedWorkBookId());
-
-        if (!workBookRepository.existsByIdAndMemberId(workBookId, member.getId())){
-            throw new AccessDeniedException("사용자가 소유한 문제집이 아닙니다.");
-        }
-        List<WorkBookInfo> workBookInfos = workBookInfoRepository.findAllByWorkBookId(workBookId);
+        // 전체 문제 리스트 생성
         List<Question> requestedQuestions = new ArrayList<>();
-        for (WorkBookInfo workBookInfo : workBookInfos) {
-            Long questionInfoId = workBookInfo.getQuestionInfo().getId();
-            Question question = questionRepository.findByMemberIdAndQuestionInfoId(member.getId(), questionInfoId).get();
-            if (question.getDel())
-                continue;
-            requestedQuestions.add(question);
-        }
 
-        if (requestedQuestions.size() < request.getOptions().getCount()){
-            throw new IllegalArgumentException("문제집의 문제 수가 선택한 수보다 적습니다.");
-        }
-        List<FindQuestionsByNormalExamResponse> response = new ArrayList<>();
-        if (request.getOptions().isRandom()){
+        for (String encryptedId : request.getEncryptedWorkBookIds()) {
+            Long workBookId = encryptionService.decryptPrimaryKey(encryptedId);
 
-            Collections.shuffle(requestedQuestions);
-            List<Question> selectedQuestions = requestedQuestions.subList(0, request.getOptions().getCount());
-            for (Question question : selectedQuestions) {
-                QuestionInfo questionInfo = question.getQuestionInfo();
-
-                FindQuestionsByNormalExamResponse selectedQuestion = new FindQuestionsByNormalExamResponse();
-                selectedQuestion.setEncryptedQuestionId(encryptionService.encryptPrimaryKey(question.getId()));
-                selectedQuestion.setName(questionInfo.getName());
-                selectedQuestion.setType(questionInfo.getType());
-                selectedQuestion.setAnswer(questionInfo.getAnswer());
-                selectedQuestion.setOpt(questionInfo.getOption());
-                selectedQuestion.setWrong(question.getWrong());
-                selectedQuestion.setRecentSolveTime(question.getRecentSolveTime());
-
-                response.add(selectedQuestion);
-            }
-        }
-        else {
-
-            // 문제 유형별 분류
-            List<QuestionInfo> oxList = new ArrayList<>();
-            List<QuestionInfo> multipleList = new ArrayList<>();
-            List<QuestionInfo> blankList = new ArrayList<>();
-
-            for (Question question : requestedQuestions) {
-                QuestionInfo questionInfo = question.getQuestionInfo();
-                if (questionInfo.getType().equals(QuestionType.OX)) {
-                    oxList.add(questionInfo);
-                } else if (questionInfo.getType().equals(QuestionType.MULTIPLE_CHOICE)) {
-                    multipleList.add(questionInfo);
-                } else if (questionInfo.getType().equals(QuestionType.FILL_IN_THE_BLANK)) {
-                    blankList.add(questionInfo);
-                }
+            if (!workBookRepository.existsByIdAndMemberId(workBookId, member.getId())) {
+                throw new AccessDeniedException("사용자가 소유한 문제집이 아닙니다.");
             }
 
-            // 사용자 선택 옵션 확인
-            int totalCount = request.getOptions().getCount();
-            Map<QuestionType, List<QuestionInfo>> selectedTypes = new HashMap<>();
+            List<WorkBookInfo> workBookInfos = workBookInfoRepository.findAllByWorkBookId(workBookId);
 
-            if (request.getOptions().isOx() && !oxList.isEmpty()) selectedTypes.put(QuestionType.OX, oxList);
-            if (request.getOptions().isMultiple() && !multipleList.isEmpty())
-                selectedTypes.put(QuestionType.MULTIPLE_CHOICE, multipleList);
-            if (request.getOptions().isBlank() && !blankList.isEmpty())
-                selectedTypes.put(QuestionType.FILL_IN_THE_BLANK, blankList);
+            for (WorkBookInfo workBookInfo : workBookInfos) {
+                Long questionInfoId = workBookInfo.getQuestionInfo().getId();
+                Optional<Question> questionOpt = questionRepository.findByMemberIdAndQuestionInfoId(member.getId(), questionInfoId);
 
-            int selectedTypeCount = selectedTypes.size();
-            if (selectedTypeCount == 0) {
-                throw new IllegalArgumentException("선택한 문제 유형의 문제가 존재하지 않습니다.");
-            }
-
-            // 균등 분배할 개수
-            int perTypeCount = totalCount / selectedTypeCount;
-            int remainder = totalCount % selectedTypeCount;
-
-            Map<QuestionType, Integer> questionDistribution = new HashMap<>();
-            for (QuestionType type : selectedTypes.keySet()) {
-                questionDistribution.put(type, perTypeCount + (remainder-- > 0 ? 1 : 0));
-            }
-
-            // 부족한 유형을 모두 체크하여 리스트로 저장
-            List<String> missingTypes = new ArrayList<>();
-            for (Map.Entry<QuestionType, Integer> entry : questionDistribution.entrySet()) {
-                QuestionType type = entry.getKey();
-                List<QuestionInfo> availableQuestions = selectedTypes.get(type);
-                int requiredCount = entry.getValue();
-
-                if (availableQuestions.size() < requiredCount) {
-                    missingTypes.add(type + " 유형의 문제가 부족합니다. (필요: " + requiredCount + "개, 존재: " + availableQuestions.size() + "개)");
-                }
-            }
-
-            // 부족한 유형이 하나라도 있다면 에러 메시지 반환
-            if (!missingTypes.isEmpty()) {
-                throw new IllegalArgumentException("요청한 문제를 출제할 수 없습니다.\n" + String.join("\n", missingTypes));
-            }
-
-            // 문제 선택
-            List<QuestionInfo> finalSelected = new ArrayList<>();
-            for (Map.Entry<QuestionType, Integer> entry : questionDistribution.entrySet()) {
-                QuestionType type = entry.getKey();
-                List<QuestionInfo> availableQuestions = selectedTypes.get(type);
-                finalSelected.addAll(selectRandomQuestions(availableQuestions, entry.getValue()));
-            }
-
-            // 응답 생성
-            for (QuestionInfo questionInfo : finalSelected) {
-                Question question = questionRepository.findByMemberIdAndQuestionInfoIdAndDelFalse(
-                        member.getId(), questionInfo.getId()).orElseThrow(() -> new IllegalArgumentException("해당 문제를 찾을 수 없습니다."));
-
-                FindQuestionsByNormalExamResponse selectedQuestion = new FindQuestionsByNormalExamResponse();
-                selectedQuestion.setEncryptedQuestionId(encryptionService.encryptPrimaryKey(question.getId()));
-                selectedQuestion.setName(questionInfo.getName());
-                selectedQuestion.setType(questionInfo.getType());
-                selectedQuestion.setAnswer(questionInfo.getAnswer());
-                selectedQuestion.setOpt(questionInfo.getOption());
-                selectedQuestion.setWrong(question.getWrong());
-                selectedQuestion.setRecentSolveTime(question.getRecentSolveTime());
-
-                response.add(selectedQuestion);
+                questionOpt.ifPresent(q -> {
+                    if (!q.getDel()) requestedQuestions.add(q);
+                });
             }
         }
 
-        return response;
+        if (requestedQuestions.size() < request.getOptions().getCount()) {
+            throw new IllegalArgumentException("선택된 문제집의 문제 수가 요청 수보다 적습니다.");
+        }
+
+        // 출제 방식에 따라 분기
+        if (request.getOptions().isRandom()) {
+            return buildRandomExamResponse(requestedQuestions, request.getOptions().getCount());
+        } else {
+            return buildTypeBasedExamResponse(requestedQuestions, request.getOptions(), member);
+        }
     }
+
+    @SneakyThrows
+    private List<FindQuestionsByNormalExamResponse> buildRandomExamResponse(List<Question> questions, int count) {
+        Collections.shuffle(questions);
+        List<Question> selected = questions.subList(0, count);
+
+        return selected.stream().map(this::mapToResponse).toList();
+    }
+
+    private FindQuestionsByNormalExamResponse mapToResponse(Question question) {
+        try {
+            QuestionInfo info = question.getQuestionInfo();
+            FindQuestionsByNormalExamResponse res = new FindQuestionsByNormalExamResponse();
+            res.setEncryptedQuestionId(encryptionService.encryptPrimaryKey(question.getId()));
+            res.setName(info.getName());
+            res.setType(info.getType());
+            res.setAnswer(info.getAnswer());
+            res.setOpt(info.getOption());
+            res.setWrong(question.getWrong());
+            res.setRecentSolveTime(question.getRecentSolveTime());
+            return res;
+        } catch (Exception e) {
+            throw new RuntimeException("암호화 중 오류 발생", e);
+        }
+    }
+
+
+
+
+    private List<FindQuestionsByNormalExamResponse> buildTypeBasedExamResponse(List<Question> questions, NormalExamOption options, Member member) {
+        // 문제 유형별 분류
+        Map<QuestionType, List<Question>> typeMap = new HashMap<>();
+        typeMap.put(QuestionType.OX, new ArrayList<>());
+        typeMap.put(QuestionType.MULTIPLE_CHOICE, new ArrayList<>());
+        typeMap.put(QuestionType.FILL_IN_THE_BLANK, new ArrayList<>());
+
+        for (Question question : questions) {
+            typeMap.get(question.getQuestionInfo().getType()).add(question);
+        }
+
+        // 사용자 선택 유형 필터
+        Map<QuestionType, List<Question>> selectedTypes = new LinkedHashMap<>();
+        if (options.isOx() && !typeMap.get(QuestionType.OX).isEmpty()) {
+            selectedTypes.put(QuestionType.OX, typeMap.get(QuestionType.OX));
+        }
+        if (options.isMultiple() && !typeMap.get(QuestionType.MULTIPLE_CHOICE).isEmpty()) {
+            selectedTypes.put(QuestionType.MULTIPLE_CHOICE, typeMap.get(QuestionType.MULTIPLE_CHOICE));
+        }
+        if (options.isBlank() && !typeMap.get(QuestionType.FILL_IN_THE_BLANK).isEmpty()) {
+            selectedTypes.put(QuestionType.FILL_IN_THE_BLANK, typeMap.get(QuestionType.FILL_IN_THE_BLANK));
+        }
+
+        int totalCount = options.getCount();
+        int typeCount = selectedTypes.size();
+
+        if (typeCount == 0) {
+            throw new IllegalArgumentException("선택한 문제 유형의 문제가 존재하지 않습니다.");
+        }
+
+        // 균등 분배
+        int perType = totalCount / typeCount;
+        int remainder = totalCount % typeCount;
+
+        Map<QuestionType, Integer> distribution = new HashMap<>();
+        for (QuestionType type : selectedTypes.keySet()) {
+            distribution.put(type, perType + (remainder-- > 0 ? 1 : 0));
+        }
+
+        // 선택된 문제들
+        List<Question> selectedQuestions = new ArrayList<>();
+        List<String> shortageMessages = new ArrayList<>();
+
+        for (Map.Entry<QuestionType, Integer> entry : distribution.entrySet()) {
+            List<Question> pool = selectedTypes.get(entry.getKey());
+            int needed = entry.getValue();
+
+            if (pool.size() < needed) {
+                shortageMessages.add(entry.getKey() + " 유형의 문제가 부족합니다. (필요: " + needed + "개, 존재: " + pool.size() + "개)");
+            } else {
+                Collections.shuffle(pool);
+                selectedQuestions.addAll(pool.subList(0, needed));
+            }
+        }
+
+        if (!shortageMessages.isEmpty()) {
+            throw new IllegalArgumentException("요청한 문제를 출제할 수 없습니다.\n" + String.join("\n", shortageMessages));
+        }
+
+        return selectedQuestions.stream().map(this::mapToResponse).toList();
+    }
+
+
+
 
     public List<FindQuestionsByMockExamResponse> findQuestionsByMockExam(String token, FindQuestionsByMockExamRequest request) throws Exception {
         String userId = jwtUtility.getUserIdFromToken(token);
@@ -431,6 +433,39 @@ public class SolvingService {
         attendance.setDate(today);
         attendance.setCheckedTime(new Timestamp(System.currentTimeMillis()));
         attendanceRepository.save(attendance);
+    }
+    @Transactional(readOnly = true)
+    public FindQuestionsByTypeResponse findQuestionsByTypeResponse(String token, List<String> encryptedWorkBookIds) throws Exception {
+        String userId = jwtUtility.getUserIdFromToken(token);
+
+        Member member = localMemberRepository.findByUserId(userId)
+                .orElseThrow(() -> new EntityNotFoundException("해당 멤버를 찾을 수 없습니다."))
+                .getMember();
+
+        int multipleChoice = 0;
+        int fillInTheBlank = 0;
+        int ox = 0;
+
+        for (String encryptedId : encryptedWorkBookIds) {
+            Long workBookId = encryptionService.decryptPrimaryKey(encryptedId);
+            WorkBook workBook = workBookRepository.findById(workBookId)
+                    .orElseThrow(() -> new EntityNotFoundException("해당 문제집을 찾을 수 없습니다."));
+
+            if (!workBook.getMember().getId().equals(member.getId())) {
+                throw new SecurityException("접근 권한이 없는 문제집입니다.");
+            }
+
+            multipleChoice += workBook.getMultipleChoice();
+            fillInTheBlank += workBook.getFillInTheBlank();
+            ox += workBook.getOx();
+        }
+
+        FindQuestionsByTypeResponse response = new FindQuestionsByTypeResponse();
+        response.setMultipleChoice(multipleChoice);
+        response.setFillInTheBlank(fillInTheBlank);
+        response.setOx(ox);
+
+        return response;
     }
 
     private boolean isOlder(Question a, Question b) {
