@@ -432,6 +432,39 @@ public class SolvingService {
         attendance.setCheckedTime(new Timestamp(System.currentTimeMillis()));
         attendanceRepository.save(attendance);
     }
+    @Transactional(readOnly = true)
+    public FindQuestionsByTypeResponse findQuestionsByTypeResponse(String token, List<String> encryptedWorkBookIds) throws Exception {
+        String userId = jwtUtility.getUserIdFromToken(token);
+
+        Member member = localMemberRepository.findByUserId(userId)
+                .orElseThrow(() -> new EntityNotFoundException("해당 멤버를 찾을 수 없습니다."))
+                .getMember();
+
+        int multipleChoice = 0;
+        int fillInTheBlank = 0;
+        int ox = 0;
+
+        for (String encryptedId : encryptedWorkBookIds) {
+            Long workBookId = encryptionService.decryptPrimaryKey(encryptedId);
+            WorkBook workBook = workBookRepository.findById(workBookId)
+                    .orElseThrow(() -> new EntityNotFoundException("해당 문제집을 찾을 수 없습니다."));
+
+            if (!workBook.getMember().getId().equals(member.getId())) {
+                throw new SecurityException("접근 권한이 없는 문제집입니다.");
+            }
+
+            multipleChoice += workBook.getMultipleChoice();
+            fillInTheBlank += workBook.getFillInTheBlank();
+            ox += workBook.getOx();
+        }
+
+        FindQuestionsByTypeResponse response = new FindQuestionsByTypeResponse();
+        response.setMultipleChoice(multipleChoice);
+        response.setFillInTheBlank(fillInTheBlank);
+        response.setOx(ox);
+
+        return response;
+    }
 
     private boolean isOlder(Question a, Question b) {
         Timestamp aTime = a.getRecentSolveTime();

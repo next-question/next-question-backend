@@ -78,4 +78,15 @@ public class SolvingController {
             List<FindHistoryInfoByHistoryResponse> response = solvingService.findHistoryInfoByHistory(request);
             return ResponseEntity.ok(response);
     }
+
+    @PostMapping("member/solving/normal/search/type")
+    public ResponseEntity<?> findHistoryInfoByHistory(
+            @RequestHeader("Authorization") String token,
+            @RequestBody List<String> request
+    ) throws Exception {
+        FindQuestionsByTypeResponse response = solvingService.findQuestionsByTypeResponse(token, request);
+        return ResponseEntity.ok(response);
+    }
+
+
 }

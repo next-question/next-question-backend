@@ -112,9 +112,9 @@ public class QuestionService {
         }
 
         // WorkBook에 카운트 값 저장
-        workBook.setMultipleChoice(multipleChoiceCount);
-        workBook.setFillInTheBlank(fillInTheBlankCount);
-        workBook.setOx(oxCount);
+        workBook.setMultipleChoice(workBook.getMultipleChoice()+ multipleChoiceCount);
+        workBook.setFillInTheBlank(workBook.getFillInTheBlank()+ fillInTheBlankCount);
+        workBook.setOx(workBook.getOx()+ oxCount);
         workBookRepository.save(workBook);
     }
 

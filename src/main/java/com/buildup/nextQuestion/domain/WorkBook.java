@@ -24,12 +24,12 @@ public class WorkBook {
     private Timestamp recentSolveDate; // 문제집 최근 학습일
 
     @Column(name = "multiple_choice")
-    private Integer multipleChoice;
+    private Integer multipleChoice = 0;
 
-    private Integer ox;
+    private Integer ox = 0;
 
     @Column(name = "fill_in_the_blank")
-    private Integer fillInTheBlank;
+    private Integer fillInTheBlank = 0;
 
 
 }
