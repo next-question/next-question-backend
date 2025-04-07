@@ -16,6 +16,7 @@ import java.nio.file.AccessDeniedException;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -301,6 +302,7 @@ public class SolvingService {
     @Transactional
     public List<GetOrAssignTodayQuestionsResponse> getOrAssignTodayQuestions(String token) throws Exception {
         LocalDate today = LocalDate.now();
+        LocalDate oneMonthAgo = today.minusMonths(1);
 
         String userId = jwtUtility.getUserIdFromToken(token);
 
@@ -309,42 +311,40 @@ public class SolvingService {
                 .orElseThrow(() -> new EntityNotFoundException("해당 멤버를 찾을 수 없습니다."))
                 .getMember();
 
-
-        List<GetOrAssignTodayQuestionsResponse> responses = new ArrayList<>();
-
-        // 이미 오늘 제공된 문제가 있다면 그대로 반환
+        // 이미 오늘 문제를 받았는지 확인
         List<Question> todayQuestions = questionRepository.findByMemberAndAssignedDate(member, today);
         if (!todayQuestions.isEmpty()) {
-            for (Question q : todayQuestions) {
-                GetOrAssignTodayQuestionsResponse response = new GetOrAssignTodayQuestionsResponse();
-                response.setEncryptedQuestionId(encryptionService.encryptPrimaryKey(q.getId()));
-                response.setName(q.getQuestionInfo().getName());
-                response.setType(q.getQuestionInfo().getType());
-                response.setAnswer(q.getQuestionInfo().getAnswer());
-                response.setOpt(q.getQuestionInfo().getOption());
-                response.setWrong(q.getWrong());
-                response.setRecentSolveTime(q.getRecentSolveTime());
-
-                q.setAssignedDate(today);
-                responses.add(response);
-            }
-
-
-            return responses;
+            return todayQuestions.stream().map(q -> {
+                GetOrAssignTodayQuestionsResponse res = new GetOrAssignTodayQuestionsResponse();
+                try {
+                    res.setEncryptedQuestionId(encryptionService.encryptPrimaryKey(q.getId()));
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                res.setName(q.getQuestionInfo().getName());
+                res.setType(q.getQuestionInfo().getType());
+                res.setAnswer(q.getQuestionInfo().getAnswer());
+                res.setOpt(q.getQuestionInfo().getOption());
+                res.setWrong(q.getWrong());
+                res.setRecentSolveTime(q.getRecentSolveTime());
+                return res;
+            }).toList();
         }
 
-        // 사용자가 보유한 문제 중 삭제되지 않은 것만 필터링
-        List<Question> ownedQuestions = questionRepository.findAllByMemberId(member.getId()).stream()
+        // 문제 목록 조회 (삭제되지 않은 것 중 최근 1달 이내 풀이한 문제)
+        List<Question> recentQuestions = questionRepository.findAllByMemberId(member.getId()).stream()
                 .filter(q -> !q.getDel())
+                .filter(q -> q.getRecentSolveTime() == null
+                        || !q.getRecentSolveTime().toLocalDateTime().toLocalDate().isBefore(oneMonthAgo))
                 .toList();
 
-        if (ownedQuestions.isEmpty()) {
-            throw new IllegalStateException("사용자가 학습 중인 문제가 없습니다.");
+        if (recentQuestions.size() < 3) {
+            throw new IllegalStateException("최근 한 달 이내 학습한 문제가 3개 미만입니다.");
         }
 
-        // QuestionInfo 단위로 중복 제거 (같은 문제 여러 개 가지고 있을 수 있으니까)
+        // 중복 제거 (QuestionInfo 기준 최신 문제)
         Map<Long, Question> latestByInfoId = new HashMap<>();
-        for (Question q : ownedQuestions) {
+        for (Question q : recentQuestions) {
             Long infoId = q.getQuestionInfo().getId();
             if (!latestByInfoId.containsKey(infoId) || isOlder(q, latestByInfoId.get(infoId))) {
                 latestByInfoId.put(infoId, q);
@@ -353,36 +353,49 @@ public class SolvingService {
 
         List<Question> uniqueQuestions = new ArrayList<>(latestByInfoId.values());
 
-        // 최근 학습 시간 기준 오름차순 정렬 (recentSolveTime이 null이면 가장 먼저)
-        uniqueQuestions.sort(Comparator.comparing(
-                Question::getRecentSolveTime,
-                Comparator.nullsFirst(Comparator.naturalOrder())
-        ));
+        // 오답 우선 정렬
+        List<Question> wrongQuestions = uniqueQuestions.stream()
+                .filter(Question::getWrong)
+                .collect(Collectors.toList());
 
-        // 최대 3개 선택
-        List<Question> selected = uniqueQuestions.stream()
+        List<Question> selected = new ArrayList<>(wrongQuestions.stream()
                 .limit(3)
-                .toList();
+                .toList());
 
+        // 부족한 수는 랜덤으로 보충
+        if (selected.size() < 3) {
+            Set<Long> selectedIds = selected.stream().map(q -> q.getId()).collect(Collectors.toSet());
+            List<Question> remaining = uniqueQuestions.stream()
+                    .filter(q -> !selectedIds.contains(q.getId()))
+                    .collect(Collectors.toList());
+            Collections.shuffle(remaining);
+            int remainingToPick = 3 - selected.size();
+            selected.addAll(remaining.stream().limit(remainingToPick).toList());
+        }
 
+        if (selected.size() < 3) {
+            throw new IllegalStateException("선정된 문제가 3개 미만입니다.");
+        }
 
-        // assignedDate 설정 (오늘 제공된 문제로 표시)
+        // 결과 응답 구성
+        List<GetOrAssignTodayQuestionsResponse> responses = new ArrayList<>();
         for (Question q : selected) {
-            GetOrAssignTodayQuestionsResponse response = new GetOrAssignTodayQuestionsResponse();
-            response.setEncryptedQuestionId(encryptionService.encryptPrimaryKey(q.getId()));
-            response.setName(q.getQuestionInfo().getName());
-            response.setType(q.getQuestionInfo().getType());
-            response.setAnswer(q.getQuestionInfo().getAnswer());
-            response.setOpt(q.getQuestionInfo().getOption());
-            response.setWrong(q.getWrong());
-            response.setRecentSolveTime(q.getRecentSolveTime());
+            GetOrAssignTodayQuestionsResponse res = new GetOrAssignTodayQuestionsResponse();
+            res.setEncryptedQuestionId(encryptionService.encryptPrimaryKey(q.getId()));
+            res.setName(q.getQuestionInfo().getName());
+            res.setType(q.getQuestionInfo().getType());
+            res.setAnswer(q.getQuestionInfo().getAnswer());
+            res.setOpt(q.getQuestionInfo().getOption());
+            res.setWrong(q.getWrong());
+            res.setRecentSolveTime(q.getRecentSolveTime());
 
             q.setAssignedDate(today);
-            responses.add(response);
+            responses.add(res);
         }
 
         return responses;
     }
+
 
     @Transactional
     public void recordAttendance(String token, List<RecordAttendanceRequest> requests) throws Exception {
@@ -401,6 +414,9 @@ public class SolvingService {
             throw new IllegalArgumentException("이미 출석처리 되었습니다.");
         }
 
+        if (requests.size() != 3){
+            throw new IllegalArgumentException("출석 인증이 처리되지 않았습니다.");
+        }
         // 문제 풀이 처리
         for (RecordAttendanceRequest request : requests) {
             Long questionId = encryptionService.decryptPrimaryKey(request.getEncryptedQuestionId());
