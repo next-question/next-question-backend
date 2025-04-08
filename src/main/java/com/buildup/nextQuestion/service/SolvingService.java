@@ -6,6 +6,7 @@ import com.buildup.nextQuestion.dto.question.NormalExamOption;
 import com.buildup.nextQuestion.dto.solving.FindQuestionsByNormalExamResponse;
 import com.buildup.nextQuestion.dto.solving.*;
 import com.buildup.nextQuestion.repository.*;
+import com.buildup.nextQuestion.support.MemberFinder;
 import com.buildup.nextQuestion.utility.JwtUtility;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -28,7 +29,7 @@ public class SolvingService {
     private final HistoryRepository historyRepository;
     private final HistoryInfoRepository historyInfoRepository;
     private final JwtUtility jwtUtility;
-    private final LocalMemberRepository localMemberRepository;
+    private final MemberFinder memberFinder;
     private final EncryptionService encryptionService;
     private final WorkBookRepository workBookRepository;
     private final WorkBookInfoRepository workBookInfoRepository;
@@ -40,9 +41,7 @@ public class SolvingService {
     public List<FindQuestionsByNormalExamResponse> findQuestionsByNormalExam(String token, FindQuestionsByNormalExamRequest request) throws Exception {
         String userId = jwtUtility.getUserIdFromToken(token);
 
-        Member member = localMemberRepository.findByUserId(userId)
-                .orElseThrow(() -> new EntityNotFoundException("해당 멤버를 찾을 수 없습니다."))
-                .getMember();
+        Member member = memberFinder.findMember(userId);
 
         // 전체 문제 리스트 생성
         List<Question> requestedQuestions = new ArrayList<>();
@@ -175,9 +174,7 @@ public class SolvingService {
         String userId = jwtUtility.getUserIdFromToken(token);
 
         // 사용자 조회
-        Member member = localMemberRepository.findByUserId(userId)
-                .orElseThrow(() -> new EntityNotFoundException("해당 멤버를 찾을 수 없습니다."))
-                .getMember();
+        Member member = memberFinder.findMember(userId);
 
         Long workBookId = encryptionService.decryptPrimaryKey(request.getEncryptedWorkBookId());
 
@@ -226,9 +223,7 @@ public class SolvingService {
     public void saveHistoryByExam(String token, SaveHistoryByExamRequest request) throws Exception {
         String userId = jwtUtility.getUserIdFromToken(token);
 
-        Member member = localMemberRepository.findByUserId(userId)
-                .orElseThrow(() -> new EntityNotFoundException("해당 멤버를 찾을 수 없습니다."))
-                .getMember();
+        Member member = memberFinder.findMember(userId);
 
         // 기록 저장
         History history = new History();
@@ -262,9 +257,7 @@ public class SolvingService {
     public List<FindHistoryByMemberResponse> findHistoryByMember(String token) throws Exception {
         String userId = jwtUtility.getUserIdFromToken(token);
 
-        Member member = localMemberRepository.findByUserId(userId)
-                .orElseThrow(() -> new EntityNotFoundException("해당 멤버를 찾을 수 없습니다."))
-                .getMember();
+        Member member = memberFinder.findMember(userId);
 
         List<FindHistoryByMemberResponse> response = new ArrayList<>();
 
@@ -309,9 +302,7 @@ public class SolvingService {
         String userId = jwtUtility.getUserIdFromToken(token);
 
         // 사용자 조회
-        Member member = localMemberRepository.findByUserId(userId)
-                .orElseThrow(() -> new EntityNotFoundException("해당 멤버를 찾을 수 없습니다."))
-                .getMember();
+        Member member = memberFinder.findMember(userId);
 
         // 이미 오늘 문제를 받았는지 확인
         List<Question> todayQuestions = questionRepository.findByMemberAndAssignedDate(member, today);
@@ -406,9 +397,7 @@ public class SolvingService {
         String userId = jwtUtility.getUserIdFromToken(token);
 
         // 사용자 조회
-        Member member = localMemberRepository.findByUserId(userId)
-                .orElseThrow(() -> new EntityNotFoundException("해당 멤버를 찾을 수 없습니다."))
-                .getMember();
+        Member member = memberFinder.findMember(userId);
 
         // 이미 출석 기록이 있는지 확인
         boolean alreadyChecked = attendanceRepository.existsByMemberAndDate(member, today);
@@ -438,9 +427,7 @@ public class SolvingService {
     public FindQuestionsByTypeResponse findQuestionsByTypeResponse(String token, List<String> encryptedWorkBookIds) throws Exception {
         String userId = jwtUtility.getUserIdFromToken(token);
 
-        Member member = localMemberRepository.findByUserId(userId)
-                .orElseThrow(() -> new EntityNotFoundException("해당 멤버를 찾을 수 없습니다."))
-                .getMember();
+        Member member = memberFinder.findMember(userId);
 
         int multipleChoice = 0;
         int fillInTheBlank = 0;
