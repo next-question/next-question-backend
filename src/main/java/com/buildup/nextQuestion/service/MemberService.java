@@ -8,6 +8,7 @@ import com.buildup.nextQuestion.dto.member.*;
 import com.buildup.nextQuestion.repository.AttendanceRepository;
 import com.buildup.nextQuestion.repository.LocalMemberRepository;
 import com.buildup.nextQuestion.repository.MemberRepository;
+import com.buildup.nextQuestion.support.MemberFinder;
 import com.buildup.nextQuestion.utility.JwtUtility;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -26,13 +27,14 @@ import java.util.List;
 public class MemberService {
 
     private final LocalMemberRepository localMemberRepository;
+    private final MemberFinder memberFinder;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtility jwtUtility;
     private final MemberRepository memberRepository;
     private final EncryptionService encryptionService;
     private final AttendanceRepository attendanceRepository;
 
-    public LoginResponse login(LoginRequest loginDTOrequest) {
+    public LoginResponse login(LoginRequest loginDTOrequest) { //로컬 로그인
         String userId = loginDTOrequest.getUserId();
         String password = loginDTOrequest.getPassword();
         // 1. userId로 회원 조회
@@ -67,9 +69,7 @@ public class MemberService {
         String userId = jwtUtility.getUserIdFromToken(token);
 
         // 사용자 조회
-        Member member = localMemberRepository.findByUserId(userId)
-                .orElseThrow(() -> new EntityNotFoundException("해당 멤버를 찾을 수 없습니다."))
-                .getMember();
+        Member member = memberFinder.findMember(userId);
 
         AttendanceResponse response = new AttendanceResponse();
         response.setHasAttended(false);
@@ -83,9 +83,7 @@ public class MemberService {
         String userId = jwtUtility.getUserIdFromToken(token);
 
         // 사용자 조회
-        Member member = localMemberRepository.findByUserId(userId)
-                .orElseThrow(() -> new EntityNotFoundException("해당 멤버를 찾을 수 없습니다."))
-                .getMember();
+        Member member = memberFinder.findMember(userId);
 
         List<String> attendances = new ArrayList<>();
 
