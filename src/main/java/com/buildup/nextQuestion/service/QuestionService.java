@@ -8,6 +8,7 @@ import com.buildup.nextQuestion.exception.DuplicateResourceException;
 import com.buildup.nextQuestion.exception.AccessDeniedException;
 import com.buildup.nextQuestion.dto.question.*;
 import com.buildup.nextQuestion.repository.*;
+import com.buildup.nextQuestion.support.MemberFinder;
 import com.buildup.nextQuestion.utility.JwtUtility;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -36,6 +37,7 @@ public class QuestionService {
     private final LocalMemberRepository localMemberRepository;
     private final WorkBookRepository workBookRepository;
     private final WorkBookInfoRepository workBookInfoRepository;
+    private final MemberFinder memberFinder;
 
     //생성된 문제 리스트 저장
     @Transactional
@@ -72,9 +74,7 @@ public class QuestionService {
     @Transactional
     public void saveQuestion(String token, SaveQuestionRequest request) throws Exception {
         String userId = jwtUtility.getUserIdFromToken(token);
-        Member member = localMemberRepository.findByUserId(userId)
-                .orElseThrow(() -> new EntityNotFoundException("해당 멤버를 찾을 수 없습니다."))
-                .getMember();
+        Member member = memberFinder.findMember(userId);
 
         Long workBookId = encryptionService.decryptPrimaryKey(request.getEncryptedWorkBookId());
 
@@ -122,7 +122,7 @@ public class QuestionService {
     @Transactional
     public List<FindQuestionByMemberResponse> findQuestionByMember(String token) throws Exception {
         String userId = jwtUtility.getUserIdFromToken(token);
-        Member member = localMemberRepository.findByUserId(userId).orElseThrow(() -> new EntityNotFoundException("해당 멤버를 찾을 수 없습니다.")).getMember();
+        Member member = memberFinder.findMember(userId);
 
         List<Question> questionInfos = questionRepository.findAllByMemberId(member.getId());
 
@@ -151,9 +151,7 @@ public class QuestionService {
     @Transactional
     public void deleteQuestion(String token, List<String> encryptedQuestionIds) throws Exception {
         String userId = jwtUtility.getUserIdFromToken(token);
-        Member member = localMemberRepository.findByUserId(userId)
-                .orElseThrow(() -> new EntityNotFoundException("해당 멤버를 찾을 수 없습니다."))
-                .getMember();
+        Member member = memberFinder.findMember(userId);
 
         if (encryptedQuestionIds == null || encryptedQuestionIds.isEmpty()) {
             throw new EntityNotFoundException("삭제할 문제가 없습니다.");
@@ -181,9 +179,7 @@ public class QuestionService {
         String userId = jwtUtility.getUserIdFromToken(token);
 
         // 사용자 조회
-        Member member = localMemberRepository.findByUserId(userId)
-                .orElseThrow(() -> new EntityNotFoundException("해당 멤버를 찾을 수 없습니다."))
-                .getMember();
+        Member member = memberFinder.findMember(userId);
 
         // 원본 문제집 조회 및 검증
         Long sourceWorkBookId = encryptionService.decryptPrimaryKey(request.getEncryptedSourceWorkbookId());
