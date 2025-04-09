@@ -266,40 +266,38 @@ public class SolvingService {
                 .orElseThrow(() -> new EntityNotFoundException("해당 멤버를 찾을 수 없습니다."))
                 .getMember();
 
-        List<FindHistoryByMemberResponse> response = new ArrayList<>();
+        List<FindHistoryByMemberResponse> responses = new ArrayList<>();
 
         List<History> histories = historyRepository.findAllByMemberId(member.getId());
+
         for (History history : histories) {
-            FindHistoryByMemberResponse requestedHistory = new FindHistoryByMemberResponse();
-            requestedHistory.setEncryptedHistoryId(encryptionService.encryptPrimaryKey(history.getId()));
-            requestedHistory.setSolvedDate(history.getSolvedDate());
-            requestedHistory.setSolvedType(history.getType());
+            FindHistoryByMemberResponse response = new FindHistoryByMemberResponse();
+            List<HistoryInfo> historyInfos = historyInfoRepository.findAllByHistoryId(history.getId());
 
-            response.add(requestedHistory);
-        }
-        return response;
-    }
+            List<QuestionInfoDTO> requestedQuestionInfos = new ArrayList<>();
+            for (HistoryInfo historyInfo : historyInfos) {
+                QuestionInfoDTO requestedQuestionInfo = new QuestionInfoDTO();
 
-    @Transactional
-    public List<FindHistoryInfoByHistoryResponse> findHistoryInfoByHistory(FindHistoryInfoByHistoryRequest request) throws Exception {
-        Long historyId = encryptionService.decryptPrimaryKey(request.getEncryptedHistoryId());
-        List<HistoryInfo> historyInfos = historyInfoRepository.findAllByHistoryId(historyId);
+                QuestionInfo questionInfo = historyInfo.getQuestion().getQuestionInfo();
+                requestedQuestionInfo.setName(questionInfo.getName());
+                requestedQuestionInfo.setType(questionInfo.getType());
+                requestedQuestionInfo.setAnswer(questionInfo.getAnswer());
+                requestedQuestionInfo.setOpt(questionInfo.getOption());
+                requestedQuestionInfo.setWrong(historyInfo.getWrong());
 
-        List<FindHistoryInfoByHistoryResponse> responses = new ArrayList<>();
-        for (HistoryInfo historyInfo : historyInfos) {
-            FindHistoryInfoByHistoryResponse response = new FindHistoryInfoByHistoryResponse();
-
-            QuestionInfo questionInfo = historyInfo.getQuestion().getQuestionInfo();
-            response.setName(questionInfo.getName());
-            response.setType(questionInfo.getType());
-            response.setAnswer(questionInfo.getAnswer());
-            response.setOpt(questionInfo.getOption());
-            response.setWrong(historyInfo.getWrong());
-
+                requestedQuestionInfos.add(requestedQuestionInfo);
+            }
+            response.setEncryptedHistoryId(encryptionService.encryptPrimaryKey(history.getId()));
+            response.setSolvedType(history.getType());
+            response.setSolvedDate(history.getSolvedDate());
+            response.setQuestionInfos(requestedQuestionInfos);
             responses.add(response);
         }
+
         return responses;
+
     }
+
 
     @Transactional
     public List<GetOrAssignTodayQuestionsResponse> getOrAssignTodayQuestions(String token) throws Exception {
