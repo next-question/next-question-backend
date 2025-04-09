@@ -70,14 +70,6 @@ public class SolvingController {
             return ResponseEntity.ok(response);
     }
 
-    @PostMapping("member/solving/historyInfo/search")
-    public ResponseEntity<?> findHistoryInfoByHistory(
-            @RequestHeader("Authorization") String token,
-            @RequestBody FindHistoryInfoByHistoryRequest request
-    ) throws Exception {
-            List<FindHistoryInfoByHistoryResponse> response = solvingService.findHistoryInfoByHistory(request);
-            return ResponseEntity.ok(response);
-    }
 
     @PostMapping("member/solving/normal/search/type")
     public ResponseEntity<?> findHistoryInfoByHistory(
