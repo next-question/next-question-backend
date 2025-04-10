@@ -179,17 +179,23 @@ public class WorkBookService {
 
         String requestedWorkBookName = request.getName();
 
-        List<WorkBook> infos = workBookRepository.findByNameAndMemberId(requestedWorkBookName, member.getId());
+        Long workbookId = encryptionService.decryptPrimaryKey(request.getEncryptedWorkBookId());
+
+        WorkBook workBook = workBookRepository.findById(workbookId).orElseThrow(
+                () -> new EntityNotFoundException("문제집을 찾을 수 없습니다.")
+        );
+
+        Long requestedMemberId = workBook.getMember().getId();
+
+        List<WorkBook> infos = workBookRepository.findByNameAndMemberId(requestedWorkBookName, requestedMemberId)
+                .stream()
+                .filter(wb -> !wb.getId().equals(workbookId))  // 자기 자신 제외
+                .toList();
+
         if (!infos.isEmpty()) {
             throw new DuplicateResourceException("이미 존재하는 문제집입니다.");
         }
 
-        Long workbookId = encryptionService.decryptPrimaryKey(request.getEncryptedWorkBookId());
-        WorkBook workBook = workBookRepository.findById(workbookId).orElseThrow(
-                () -> new EntityNotFoundException("문제집을 찾을 수 없습니다."));
-        Long requestedMemberId = workBook.getMember().getId();
-
-        // 삭제하려는 문제집이 해당 토큰의 멤버 문제집인지 검증
         if (!requestedMemberId.equals(member.getId())) {
             throw new SecurityException("문제집 업데이트에 오류가 발생했습니다.");
         }
