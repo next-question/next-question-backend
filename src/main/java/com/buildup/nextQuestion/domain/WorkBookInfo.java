@@ -16,11 +16,11 @@ public class WorkBookInfo {
     @Column(name="work_book_info_id")
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY,cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "question_info_id")
     private QuestionInfo questionInfo;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "work_book_id")
     private WorkBook workBook;
 
