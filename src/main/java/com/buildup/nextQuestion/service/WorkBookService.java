@@ -111,6 +111,7 @@ public class WorkBookService {
             Question question = questionRepository.findByMemberIdAndQuestionInfoId(member.getId(), questionInfo.getId()).get();
             if (!question.getDel()) {
                 response.setEncryptedQuestionId(encryptionService.encryptPrimaryKey(question.getId()));
+                response.setEncryptedQuestionInfoId(encryptionService.encryptPrimaryKey(questionInfo.getId()));
                 response.setName(questionInfo.getName());
                 response.setType(questionInfo.getType());
                 response.setAnswer(questionInfo.getAnswer());
