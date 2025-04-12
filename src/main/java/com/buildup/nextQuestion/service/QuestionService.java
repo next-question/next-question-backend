@@ -200,13 +200,13 @@ public class QuestionService {
         // 문제 이동
         for (String encryptedQuestionInfoId : request.getEncryptedQuestionInfoIds()) {
             Long questionInfoId = encryptionService.decryptPrimaryKey(encryptedQuestionInfoId);
-            Question questionInfo = questionRepository.findById(questionInfoId)
+            Question question = questionRepository.findByMemberIdAndQuestionInfoId(member.getId(), questionInfoId)
                     .orElseThrow(() -> new EntityNotFoundException("해당 문제 정보가 존재하지 않습니다."));
 
-            if (!questionInfo.getMember().equals(member)) {
+            if (!question.getMember().equals(member)) {
                 throw new AccessDeniedException("사용자가 소유한 문제가 아닙니다.");
             }
-            QuestionInfo targetQuestionInfo = questionInfo.getQuestionInfo();
+            QuestionInfo targetQuestionInfo = question.getQuestionInfo();
 
             // 대상 문제집에 동일한 문제가 존재하는지 확인
             boolean isDuplicate = workBookInfoRepository.existsByWorkBookIdAndQuestionInfoId(targetWorkbookId, targetQuestionInfo.getId());

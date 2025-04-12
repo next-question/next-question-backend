@@ -11,6 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -76,10 +77,13 @@ public class QuestionController {
     public ResponseEntity<?> deleteQuestion(
             @RequestHeader("Authorization") String token,
             @RequestBody MoveQuestionRequest request
-            ) throws Exception
+    ) throws Exception
     {
-            questionService.moveQuestion(token, request);
-            return ResponseEntity.ok("문제를 성공적으로 이동했습니다.");
+        questionService.moveQuestion(token, request);
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "문제를 성공적으로 이동했습니다."
+        ));
     }
 
 }

@@ -12,6 +12,7 @@ import java.sql.Timestamp;
 @NoArgsConstructor
 public class GetQuestionsByWorkBookResponse {
     private String encryptedQuestionId;
+    private String EncryptedQuestionInfoId;
     private String name;
     private QuestionType type;
     private String answer;
