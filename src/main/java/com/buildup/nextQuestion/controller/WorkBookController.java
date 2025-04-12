@@ -36,7 +36,7 @@ public class WorkBookController {
     }
 
 
-    @GetMapping("member/workBook/search/questions")
+    @PostMapping("member/workBook/search/questions")
     public ResponseEntity<?> searchQuestionsByWorkBook(
             @RequestHeader("Authorization") String token,
             @RequestBody GetQuestionsByWorkBookRequest request
