@@ -65,13 +65,10 @@ public class WorkBookService {
         String userId = jwtUtility.getUserIdFromToken(token);
         Member member = memberFinder.findMember(userId);
 
-        List<WorkBook> workBooks = workBookRepository.findAllByMemberId(member.getId());
-        if (workBooks.isEmpty()) {
-            throw new EntityNotFoundException("해당 사용자의 문제집이 존재하지 않습니다.");
-        }
-
-
         List<GetWorkBookResponse> getWorkBookResponses = new ArrayList<>();
+
+        List<WorkBook> workBooks = workBookRepository.findAllByMemberId(member.getId());
+
         for (WorkBook workBook : workBooks) {
             int totalQuestion = 0;
             for (WorkBookInfo workBookInfo : workBookInfoRepository.findAllByWorkBookId(workBook.getId())) {
