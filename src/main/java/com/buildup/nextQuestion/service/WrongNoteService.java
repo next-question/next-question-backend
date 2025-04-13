@@ -70,7 +70,7 @@ public class WrongNoteService {
 
         //해당 기간 틀린 문제 찾기
         List<HistoryInfo> wrongHistoryInfos = historyInfoRepository
-                .findByWrongTrue(memberHistory);
+                .findByWrongIsTrueAndHistoryIn(memberHistory);
         if (wrongHistoryInfos.isEmpty()) {
             throw new EntityNotFoundException("해당 기간 오답 문제를 찾을 수 없습니다.");
         }
