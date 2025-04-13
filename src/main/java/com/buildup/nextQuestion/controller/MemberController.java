@@ -2,10 +2,7 @@ package com.buildup.nextQuestion.controller;
 
 
 import com.buildup.nextQuestion.domain.LocalMember;
-import com.buildup.nextQuestion.dto.member.FindMembersResponse;
-import com.buildup.nextQuestion.dto.member.LoginRequest;
-import com.buildup.nextQuestion.dto.member.LoginResponse;
-import com.buildup.nextQuestion.dto.member.RegistRequest;
+import com.buildup.nextQuestion.dto.member.*;
 import com.buildup.nextQuestion.service.LocalMemberService;
 import com.buildup.nextQuestion.service.MemberService;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +38,20 @@ public class MemberController {
             @RequestHeader("Authorization") String token) throws Exception {
             List<FindMembersResponse> response = memberService.findMembers();
             return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("member/attendence/find")
+    public ResponseEntity<?> findTodayAttendance (
+            @RequestHeader("Authorization") String token) throws Exception {
+        AttendanceResponse response = memberService.findTodayAttendance(token);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("member/attendences/find")
+    public ResponseEntity<?> findAllAttendances (
+            @RequestHeader("Authorization") String token) throws Exception {
+        List<String> response = memberService.findAllAttendances(token);
+        return ResponseEntity.ok(response);
     }
 
 

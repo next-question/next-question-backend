@@ -1,22 +1,17 @@
-package com.buildup.nextQuestion.dto.workBook;
+package com.buildup.nextQuestion.dto.solving;
 
 import com.buildup.nextQuestion.domain.enums.QuestionType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.sql.Timestamp;
-
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class GetQuestionsByWorkBookResponse {
-    private String encryptedQuestionId;
-    private String EncryptedQuestionInfoId;
+public class QuestionInfoDTO {
     private String name;
     private QuestionType type;
     private String answer;
     private String opt;
-    private Timestamp createTime;
-    private Timestamp recentSolveTime;
+    private Boolean wrong;
 }

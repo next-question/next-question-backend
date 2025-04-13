@@ -27,7 +27,7 @@ public class WorkBookController {
             return ResponseEntity.ok(createWorkBookResponse);
     }
 
-    @GetMapping("member/workBooks/search")
+    @PostMapping("member/workBooks/search")
     public ResponseEntity<?> searchWorkBook(
             @RequestHeader("Authorization") String token
     ) throws Exception {
@@ -36,7 +36,7 @@ public class WorkBookController {
     }
 
 
-    @GetMapping("member/workBook/search/questions")
+    @PostMapping("member/workBook/search/questions")
     public ResponseEntity<?> searchQuestionsByWorkBook(
             @RequestHeader("Authorization") String token,
             @RequestBody GetQuestionsByWorkBookRequest request

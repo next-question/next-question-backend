@@ -1,18 +1,23 @@
 package com.buildup.nextQuestion.service;
 
+import com.buildup.nextQuestion.domain.Attendance;
 import com.buildup.nextQuestion.domain.LocalMember;
 import com.buildup.nextQuestion.domain.Member;
-import com.buildup.nextQuestion.dto.member.FindMembersResponse;
-import com.buildup.nextQuestion.dto.member.LoginRequest;
-import com.buildup.nextQuestion.dto.member.LoginResponse;
+import com.buildup.nextQuestion.domain.enums.LoginType;
+import com.buildup.nextQuestion.dto.member.*;
+import com.buildup.nextQuestion.repository.AttendanceRepository;
 import com.buildup.nextQuestion.repository.LocalMemberRepository;
 import com.buildup.nextQuestion.repository.MemberRepository;
+import com.buildup.nextQuestion.support.MemberFinder;
 import com.buildup.nextQuestion.utility.JwtUtility;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.annotations.processing.Find;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,12 +27,14 @@ import java.util.List;
 public class MemberService {
 
     private final LocalMemberRepository localMemberRepository;
+    private final MemberFinder memberFinder;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtility jwtUtility;
     private final MemberRepository memberRepository;
     private final EncryptionService encryptionService;
+    private final AttendanceRepository attendanceRepository;
 
-    public LoginResponse login(LoginRequest loginDTOrequest) {
+    public LoginResponse login(LoginRequest loginDTOrequest) { //로컬 로그인
         String userId = loginDTOrequest.getUserId();
         String password = loginDTOrequest.getPassword();
         // 1. userId로 회원 조회
@@ -55,4 +62,37 @@ public class MemberService {
         }
         return response;
     }
+
+    public AttendanceResponse findTodayAttendance(String token) throws Exception {
+        LocalDate today = LocalDate.now();
+
+        String userId = jwtUtility.getUserIdFromToken(token);
+
+        // 사용자 조회
+        Member member = memberFinder.findMember(userId);
+
+        AttendanceResponse response = new AttendanceResponse();
+        response.setHasAttended(false);
+        if (attendanceRepository.existsByMemberAndDate(member, today)){
+            response.setHasAttended(true);
+        }
+        return response;
+    }
+
+    public List<String> findAllAttendances(String token){
+        String userId = jwtUtility.getUserIdFromToken(token);
+
+        // 사용자 조회
+        Member member = memberFinder.findMember(userId);
+
+        List<String> attendances = new ArrayList<>();
+
+        for (Attendance attendance : attendanceRepository.findAllByMember(member)) {
+            String requestedAttendance = attendance.getDate().toString();
+            attendances.add(requestedAttendance);
+        }
+
+        return attendances;
+    }
+
 }

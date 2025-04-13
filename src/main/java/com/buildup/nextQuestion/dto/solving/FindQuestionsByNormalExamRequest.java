@@ -5,10 +5,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import com.buildup.nextQuestion.dto.question.*;
 
+import java.util.List;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class FindQuestionsByNormalExamRequest {
-    private String encryptedWorkBookId;
+    private List<String> encryptedWorkBookIds;
     private NormalExamOption options;
 }
