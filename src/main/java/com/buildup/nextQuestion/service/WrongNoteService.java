@@ -29,6 +29,8 @@ public class WrongNoteService {
     private final SocialMemberRepository socialMemberRepository;
     private final HistoryInfoRepository historyInfoRepository;
     private final HistoryRepository historyRepository;
+    private final WorkBookRepository workBookRepository;
+    private final WorkBookInfoRepository workBookInfoRepository;
 
     @Transactional
     public FindQuestionsByWrongNoteResponse findQuestionsByWrongNote(String token, FindQuestionsByWrongNoteRequest request) throws Exception {
@@ -89,11 +91,17 @@ public class WrongNoteService {
         List<FindQuestionsByWrongNoteDTO> result = new ArrayList<>();
 
         for (HistoryInfo historyInfo : latestByQuestionInfoId.values()) {
+            FindQuestionsByWrongNoteDTO selectedQuestion = new FindQuestionsByWrongNoteDTO();
+
             Question question = historyInfo.getQuestion();
             QuestionInfo questionInfo = question.getQuestionInfo();
 
-            FindQuestionsByWrongNoteDTO selectedQuestion = new FindQuestionsByWrongNoteDTO();
+            //문제집 이름 검색
+            List<WorkBook> workBooks = workBookRepository.findAllByMemberId(member.getId());
+            WorkBookInfo workBookInfo = workBookInfoRepository.findByWorkBookInAndQuestionInfoId(workBooks, questionInfo.getId());
+
             selectedQuestion.setEncryptedQuestionId(encryptionService.encryptPrimaryKey(question.getId()));
+            selectedQuestion.setWorkBookName(workBookInfo.getWorkBook().getName());
             selectedQuestion.setName(questionInfo.getName());
             selectedQuestion.setType(questionInfo.getType());
             selectedQuestion.setAnswer(questionInfo.getAnswer());
