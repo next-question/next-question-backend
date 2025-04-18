@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.sql.Timestamp;
+import java.util.List;
 
 @Entity
 @Getter @Setter
@@ -31,5 +32,7 @@ public class WorkBook {
     @Column(name = "fill_in_the_blank")
     private Integer fillInTheBlank = 0;
 
+    @OneToMany(mappedBy = "workBook", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<WorkBookInfo> workBookInfo;
 
 }

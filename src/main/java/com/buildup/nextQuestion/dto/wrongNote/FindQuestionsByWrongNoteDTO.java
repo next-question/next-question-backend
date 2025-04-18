@@ -12,11 +12,11 @@ import java.sql.Timestamp;
 @NoArgsConstructor
 public class FindQuestionsByWrongNoteDTO {
     private String encryptedQuestionId;
+    private String WorkBookName;
     private String name;
     private QuestionType type;
     private String answer;
     private String opt;
     private Timestamp solvedDate;
     private Timestamp recentSolveTime;
-
 }
