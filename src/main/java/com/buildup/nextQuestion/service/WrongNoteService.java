@@ -102,6 +102,7 @@ public class WrongNoteService {
 
             selectedQuestion.setEncryptedQuestionId(encryptionService.encryptPrimaryKey(question.getId()));
             selectedQuestion.setEncryptedWorkBookId(encryptionService.encryptPrimaryKey(workBookInfo.getWorkBook().getId()));
+            selectedQuestion.setWorkBookName(workBookInfo.getWorkBook().getName());
             selectedQuestion.setName(questionInfo.getName());
             selectedQuestion.setType(questionInfo.getType());
             selectedQuestion.setAnswer(questionInfo.getAnswer());

@@ -13,6 +13,7 @@ import java.sql.Timestamp;
 public class FindQuestionsByWrongNoteDTO {
     private String encryptedQuestionId;
     private String encryptedWorkBookId;
+    private String workBookName;
     private String name;
     private QuestionType type;
     private String answer;
