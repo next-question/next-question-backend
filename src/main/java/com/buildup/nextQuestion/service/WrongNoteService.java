@@ -101,7 +101,7 @@ public class WrongNoteService {
             WorkBookInfo workBookInfo = workBookInfoRepository.findByWorkBookInAndQuestionInfoId(workBooks, questionInfo.getId());
 
             selectedQuestion.setEncryptedQuestionId(encryptionService.encryptPrimaryKey(question.getId()));
-            selectedQuestion.setWorkBookName(workBookInfo.getWorkBook().getName());
+            selectedQuestion.setEncryptedWorkBookId(encryptionService.encryptPrimaryKey(workBookInfo.getWorkBook().getId()));
             selectedQuestion.setName(questionInfo.getName());
             selectedQuestion.setType(questionInfo.getType());
             selectedQuestion.setAnswer(questionInfo.getAnswer());
