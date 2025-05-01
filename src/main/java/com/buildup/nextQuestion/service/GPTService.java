@@ -57,7 +57,7 @@ public class GPTService {
                                         "type", "object",
                                         "properties", Map.of(
                                                 "name", Map.of("type", "string"),
-                                                "type", Map.of("type", "string", "enum", List.of("MULTIPLE_CHOICE", "FILL_BLANK", "OX")),
+                                                "type", Map.of("type", "string", "enum", List.of("MULTIPLE_CHOICE", "FILL_IN_THE_BLANK", "OX")),
                                                 "level", Map.of("type", "string", "enum", List.of("low", "medium", "high")),
                                                 "option", Map.of("type", "string"),
                                                 "answer", Map.of("type", "string")
