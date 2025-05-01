@@ -11,6 +11,7 @@ import com.buildup.nextQuestion.repository.*;
 import com.buildup.nextQuestion.support.MemberFinder;
 import com.buildup.nextQuestion.utility.JwtUtility;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityNotFoundException;
@@ -43,6 +44,7 @@ public class QuestionService {
     @Transactional
     public List<UploadFileByMemberResponse> saveAll(JsonNode jsonNode) throws Exception {
         ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
         JsonNode questionsNode = jsonNode.get("questions");
         List<UploadFileByMemberResponse> response = new ArrayList<>();
