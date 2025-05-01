@@ -25,6 +25,7 @@ public class Member {
     private String nickname;
 
     @Enumerated(EnumType.STRING)
+
     @Column(nullable = false)
     private LoginType logintype;
 

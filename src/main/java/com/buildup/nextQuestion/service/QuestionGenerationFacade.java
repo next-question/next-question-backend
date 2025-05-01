@@ -32,6 +32,7 @@ public class QuestionGenerationFacade {
     public List<UploadFileByMemberResponse> generateQuestionByMember(MultipartFile file, String numOfQuestions) throws Exception {
 
         String content = fileService.extractTextFromPDF(file);
+
         JsonNode response = gptService.requestFunctionCalling(content, 10, 10, 10);
         return questionService.saveAll(response);
     }

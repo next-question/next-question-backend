@@ -10,4 +10,5 @@ import java.util.Optional;
 public interface SocialMemberRepository extends JpaRepository<SocialMember, Long> {
     boolean existsBySnsId(String snsId);
     Optional<SocialMember> findBySnsId(String snsId);
+    Optional<LocalMember> findByMember(Member member);
 }
