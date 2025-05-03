@@ -25,10 +25,17 @@ public class Member {
     private String nickname;
 
     @Enumerated(EnumType.STRING)
+
     @Column(nullable = false)
     private LoginType logintype;
 
     private Role role;
+
+    @Column(unique = true)
+    private String refreshToken;
+
+    @Column
+    private Date expiryDate;
 
     public Member(String nickname, LoginType logintype) {
         this.nickname = nickname;

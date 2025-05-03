@@ -26,7 +26,6 @@ public class QuestionController {
     public ResponseEntity<?> uploadFileByGuest(@RequestPart MultipartFile file) throws IOException {
             fileService.validateFile(file);
 
-
             JsonNode jsonNode = questionGenerationFacade.generateQuestionByGuest(file);
             return ResponseEntity.ok(jsonNode);
     }

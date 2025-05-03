@@ -26,17 +26,15 @@ public class QuestionGenerationFacade {
 
     public JsonNode generateQuestionByGuest(MultipartFile file) throws IOException {
         String content = fileService.extractTextFromPDF(file);
-        String response = gptService.requestGPT(content, "5");
-        return gptService.stringToJson(response);
+        return gptService.requestFunctionCalling(content, 10,10,10);
     }
 
     public List<UploadFileByMemberResponse> generateQuestionByMember(MultipartFile file, String numOfQuestions) throws Exception {
 
         String content = fileService.extractTextFromPDF(file);
-        String response = gptService.requestGPT(content, numOfQuestions);
-        JsonNode questionNode = gptService.stringToJson(response);
 
-        return questionService.saveAll(questionNode);
+        JsonNode response = gptService.requestFunctionCalling(content, 10, 10, 10);
+        return questionService.saveAll(response);
     }
 }
 
