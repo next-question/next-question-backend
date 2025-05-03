@@ -23,23 +23,23 @@ public class QuestionController {
 
 
     @PostMapping("public/questions/upload")
-    public ResponseEntity<?> uploadFileByGuest(@RequestPart MultipartFile file) throws IOException {
-            fileService.validateFile(file);
+    public ResponseEntity<?> uploadFileByGuest(@ModelAttribute UploadFileByGuestRequest request) throws IOException {
+            fileService.validateFile(request.getFile());
 
-            JsonNode jsonNode = questionGenerationFacade.generateQuestionByGuest(file);
+            JsonNode jsonNode = questionGenerationFacade.generateQuestionByGuest(request);
             return ResponseEntity.ok(jsonNode);
     }
 
     @PostMapping("member/questions/upload")
     public ResponseEntity<?> uploadFileByMember(
             @RequestHeader("Authorization") String token,
-            @ModelAttribute UploadFileByMemberReqeust uploadFileByMemberReqeust
+            @ModelAttribute UploadFileByMemberRequest request
             ) throws Exception {
-            MultipartFile pdfFile = uploadFileByMemberReqeust.getFile();
+            MultipartFile pdfFile = request.getFile();
 
             fileService.validateFile(pdfFile);
 
-        List<UploadFileByMemberResponse> response = questionGenerationFacade.generateQuestionByMember(pdfFile, uploadFileByMemberReqeust.getNumOfQuestions());
+        List<UploadFileByMemberResponse> response = questionGenerationFacade.generateQuestionByMember(request);
 
         return ResponseEntity.ok(response);
     }
