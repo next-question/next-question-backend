@@ -106,7 +106,6 @@ public class SolvingService {
 
 
     private List<FindQuestionsByNormalExamResponse> buildTypeBasedExamResponse(List<Question> questions, NormalExamOption options, Member member) {
-        // 문제 유형별 분류
         Map<QuestionType, List<Question>> typeMap = new HashMap<>();
         typeMap.put(QuestionType.OX, new ArrayList<>());
         typeMap.put(QuestionType.MULTIPLE_CHOICE, new ArrayList<>());
@@ -116,17 +115,10 @@ public class SolvingService {
             typeMap.get(question.getQuestionInfo().getType()).add(question);
         }
 
-        // 사용자 선택 유형 필터
         Map<QuestionType, List<Question>> selectedTypes = new LinkedHashMap<>();
-        if (options.isOx() && !typeMap.get(QuestionType.OX).isEmpty()) {
-            selectedTypes.put(QuestionType.OX, typeMap.get(QuestionType.OX));
-        }
-        if (options.isMultiple() && !typeMap.get(QuestionType.MULTIPLE_CHOICE).isEmpty()) {
-            selectedTypes.put(QuestionType.MULTIPLE_CHOICE, typeMap.get(QuestionType.MULTIPLE_CHOICE));
-        }
-        if (options.isBlank() && !typeMap.get(QuestionType.FILL_IN_THE_BLANK).isEmpty()) {
-            selectedTypes.put(QuestionType.FILL_IN_THE_BLANK, typeMap.get(QuestionType.FILL_IN_THE_BLANK));
-        }
+        if (options.isOx()) selectedTypes.put(QuestionType.OX, typeMap.get(QuestionType.OX));
+        if (options.isMultiple()) selectedTypes.put(QuestionType.MULTIPLE_CHOICE, typeMap.get(QuestionType.MULTIPLE_CHOICE));
+        if (options.isBlank()) selectedTypes.put(QuestionType.FILL_IN_THE_BLANK, typeMap.get(QuestionType.FILL_IN_THE_BLANK));
 
         int totalCount = options.getCount();
         int typeCount = selectedTypes.size();
@@ -135,37 +127,57 @@ public class SolvingService {
             throw new IllegalArgumentException("선택한 문제 유형의 문제가 존재하지 않습니다.");
         }
 
-        // 균등 분배
+        // 유형별로 가능한 만큼 선택
+        Map<QuestionType, List<Question>> selectedByType = new LinkedHashMap<>();
         int perType = totalCount / typeCount;
         int remainder = totalCount % typeCount;
 
-        Map<QuestionType, Integer> distribution = new HashMap<>();
-        for (QuestionType type : selectedTypes.keySet()) {
-            distribution.put(type, perType + (remainder-- > 0 ? 1 : 0));
+        int selectedTotal = 0;
+
+        for (Map.Entry<QuestionType, List<Question>> entry : selectedTypes.entrySet()) {
+            List<Question> pool = entry.getValue();
+            Collections.shuffle(pool);
+            int needed = perType + (remainder-- > 0 ? 1 : 0);
+            int pickCount = Math.min(needed, pool.size());
+            selectedByType.put(entry.getKey(), pool.subList(0, pickCount));
+            selectedTotal += pickCount;
         }
 
-        // 선택된 문제들
-        List<Question> selectedQuestions = new ArrayList<>();
-        List<String> shortageMessages = new ArrayList<>();
+        // 부족한 문제를 다른 유형에서 추가로 선택
+        if (selectedTotal < totalCount) {
+            int remaining = totalCount - selectedTotal;
 
-        for (Map.Entry<QuestionType, Integer> entry : distribution.entrySet()) {
-            List<Question> pool = selectedTypes.get(entry.getKey());
-            int needed = entry.getValue();
+            List<Question> remainingPool = new ArrayList<>();
+            for (Map.Entry<QuestionType, List<Question>> entry : selectedTypes.entrySet()) {
+                List<Question> pool = entry.getValue();
+                List<Question> alreadySelected = selectedByType.get(entry.getKey());
+                List<Question> remainingQuestions = new ArrayList<>(pool);
+                remainingQuestions.removeAll(alreadySelected);
+                remainingPool.addAll(remainingQuestions);
+            }
 
-            if (pool.size() < needed) {
-                shortageMessages.add(entry.getKey() + " 유형의 문제가 부족합니다. (필요: " + needed + "개, 존재: " + pool.size() + "개)");
-            } else {
-                Collections.shuffle(pool);
-                selectedQuestions.addAll(pool.subList(0, needed));
+            Collections.shuffle(remainingPool);
+            List<Question> extra = remainingPool.subList(0, Math.min(remaining, remainingPool.size()));
+
+            // extra 문제를 선택된 목록에 추가
+            for (Question q : extra) {
+                selectedByType.computeIfAbsent(q.getQuestionInfo().getType(), k -> new ArrayList<>()).add(q);
             }
         }
 
-        if (!shortageMessages.isEmpty()) {
-            throw new IllegalArgumentException("요청한 문제를 출제할 수 없습니다.\n" + String.join("\n", shortageMessages));
+        // 최종 선택된 문제 리스트 구성
+        List<Question> selectedQuestions = new ArrayList<>();
+        for (List<Question> list : selectedByType.values()) {
+            selectedQuestions.addAll(list);
+        }
+
+        if (selectedQuestions.size() < totalCount) {
+            throw new IllegalArgumentException("선택된 문제의 수가 요청 수보다 적습니다. (필요: " + totalCount + ", 선택됨: " + selectedQuestions.size() + ")");
         }
 
         return selectedQuestions.stream().map(this::mapToResponse).toList();
     }
+
 
 
 
