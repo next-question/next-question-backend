@@ -5,6 +5,7 @@ import com.buildup.nextQuestion.dto.question.UploadFileByGuestRequest;
 import com.buildup.nextQuestion.dto.question.UploadFileByMemberRequest;
 import com.buildup.nextQuestion.dto.question.UploadFileByMemberResponse;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -27,12 +28,20 @@ public class QuestionGenerationFacade {
         int multiple = counts[1];
         int blank = counts[2];
 
+        JsonNode response = gptService.requestFunctionCalling(content, multiple, blank, ox);
 
-        return gptService.requestFunctionCalling(content, multiple, blank, ox);
+        // level 필드 제거
+        if (response.has("questions")) {
+            for (JsonNode question : response.get("questions")) {
+                ((ObjectNode) question).remove("level");
+            }
+        }
+
+        return response;
     }
 
 
-    public JsonNode generateQuestionByMember(UploadFileByMemberRequest request) throws Exception {
+    public List<UploadFileByMemberResponse> generateQuestionByMember(UploadFileByMemberRequest request) throws Exception {
 
         String content = fileService.extractTextFromPDF(request.getFile());
 
@@ -43,8 +52,8 @@ public class QuestionGenerationFacade {
         int blank = counts[2];
 
         JsonNode response = gptService.requestFunctionCalling(content, multiple, blank, ox);
-        questionService.saveAll(response);
-        return response;
+
+        return questionService.saveAll(response);
     }
 
 

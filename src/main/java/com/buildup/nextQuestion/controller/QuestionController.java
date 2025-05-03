@@ -39,7 +39,7 @@ public class QuestionController {
 
             fileService.validateFile(pdfFile);
 
-        JsonNode response = questionGenerationFacade.generateQuestionByMember(request);
+        List<UploadFileByMemberResponse> response = questionGenerationFacade.generateQuestionByMember(request);
 
         return ResponseEntity.ok(response);
     }
