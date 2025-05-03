@@ -27,11 +27,12 @@ public class QuestionGenerationFacade {
         int multiple = counts[1];
         int blank = counts[2];
 
+
         return gptService.requestFunctionCalling(content, multiple, blank, ox);
     }
 
 
-    public List<UploadFileByMemberResponse> generateQuestionByMember(UploadFileByMemberRequest request) throws Exception {
+    public JsonNode generateQuestionByMember(UploadFileByMemberRequest request) throws Exception {
 
         String content = fileService.extractTextFromPDF(request.getFile());
 
@@ -42,8 +43,8 @@ public class QuestionGenerationFacade {
         int blank = counts[2];
 
         JsonNode response = gptService.requestFunctionCalling(content, multiple, blank, ox);
-
-        return questionService.saveAll(response);
+        questionService.saveAll(response);
+        return response;
     }
 
 
