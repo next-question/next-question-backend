@@ -226,10 +226,6 @@ public class SolvingService {
         return response;
     }
 
-    private List<QuestionInfo> selectRandomQuestions(List<QuestionInfo> questionList, int count) {
-        Collections.shuffle(questionList);
-        return questionList.subList(0, Math.min(count, questionList.size()));
-    }
 
     @Transactional
     public void saveHistoryByExam(String token, SaveHistoryByExamRequest request) throws Exception {
@@ -237,7 +233,23 @@ public class SolvingService {
 
         Member member = memberFinder.findMember(userId);
 
-        // 기록 저장
+        // 기록 개수 확인
+        List<History> existingHistories = historyRepository
+                .findByMemberOrderBySolvedDateAsc(member);
+
+        if (existingHistories.size() >= 30) {
+            int toDeleteCount = existingHistories.size() - 29; // 29개로 맞추고 새로운 1개 추가 예정
+            List<History> toDelete = existingHistories.subList(0, toDeleteCount);
+
+            // historyInfo 먼저 삭제
+            for (History history : toDelete) {
+                List<HistoryInfo> infos = historyInfoRepository.findByHistory(history);
+                historyInfoRepository.deleteAll(infos);
+            }
+            historyRepository.deleteAll(toDelete);
+        }
+
+        // 새로운 기록 저장
         History history = new History();
         history.setMember(member);
         history.setSolvedDate(new Timestamp(System.currentTimeMillis()));
@@ -246,7 +258,9 @@ public class SolvingService {
         History savedHistory = historyRepository.save(history);
 
         for (WorkBookInfoDTO workBookInfoDTO : request.getWorkBookInfoDTOS()) {
-            WorkBook workBook = workBookRepository.findById(encryptionService.decryptPrimaryKey(workBookInfoDTO.getEncryptedWorkBookId())).get();
+            WorkBook workBook = workBookRepository
+                    .findById(encryptionService.decryptPrimaryKey(workBookInfoDTO.getEncryptedWorkBookId()))
+                    .orElseThrow(() -> new EntityNotFoundException("워크북을 찾을 수 없습니다."));
             workBook.setRecentSolveDate(new Timestamp(System.currentTimeMillis()));
 
             List<ExamInfoDTO> infos = workBookInfoDTO.getInfo();
@@ -263,9 +277,8 @@ public class SolvingService {
                 historyInfoRepository.save(historyInfo);
             }
         }
-
-
     }
+
 
     @Transactional
     public List<FindHistoryByMemberResponse> findHistoryByMember(String token) throws Exception {
