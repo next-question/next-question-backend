@@ -5,11 +5,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.web.multipart.MultipartFile;
 
-
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UploadFileByMemberReqeust {
+public class UploadFileByGuestRequest {
     private MultipartFile file;
-    private String numOfQuestions;
+    private Boolean multiple;
+    private Boolean ox;
+    private Boolean blank;
 }
