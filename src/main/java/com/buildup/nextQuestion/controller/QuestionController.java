@@ -26,8 +26,8 @@ public class QuestionController {
     public ResponseEntity<?> uploadFileByGuest(@ModelAttribute UploadFileByGuestRequest request) throws IOException {
             fileService.validateFile(request.getFile());
 
-            JsonNode jsonNode = questionGenerationFacade.generateQuestionByGuest(request);
-            return ResponseEntity.ok(jsonNode);
+            JsonNode response = questionGenerationFacade.generateQuestionByGuest(request);
+            return ResponseEntity.ok(response);
     }
 
     @PostMapping("member/questions/upload")
@@ -39,7 +39,7 @@ public class QuestionController {
 
             fileService.validateFile(pdfFile);
 
-        List<UploadFileByMemberResponse> response = questionGenerationFacade.generateQuestionByMember(request);
+        JsonNode response = questionGenerationFacade.generateQuestionByMember(request);
 
         return ResponseEntity.ok(response);
     }
