@@ -233,24 +233,26 @@ public class SolvingService {
 
         History savedHistory = historyRepository.save(history);
 
-        WorkBook workBook = workBookRepository.findById(encryptionService.decryptPrimaryKey(request.getEncryptedWorkBookId())).get();
-        workBook.setRecentSolveDate(new Timestamp(System.currentTimeMillis()));
+        for (WorkBookInfoDTO workBookInfoDTO : request.getWorkBookInfoDTOS()) {
+            WorkBook workBook = workBookRepository.findById(encryptionService.decryptPrimaryKey(workBookInfoDTO.getEncryptedWorkBookId())).get();
+            workBook.setRecentSolveDate(new Timestamp(System.currentTimeMillis()));
 
-        List<ExamInfoDTO> infos = request.getInfo();
-        for (ExamInfoDTO info : infos) {
-            Long questionId = encryptionService.decryptPrimaryKey(info.getEncryptedQuestionId());
-            Question question = questionRepository.findById(questionId)
-                    .orElseThrow(() -> new EntityNotFoundException("해당 문제를 찾을 수 없습니다."));
+            List<ExamInfoDTO> infos = workBookInfoDTO.getInfo();
+            for (ExamInfoDTO info : infos) {
+                Long questionId = encryptionService.decryptPrimaryKey(info.getEncryptedQuestionId());
+                Question question = questionRepository.findById(questionId)
+                        .orElseThrow(() -> new EntityNotFoundException("해당 문제를 찾을 수 없습니다."));
 
-            QuestionInfo questionInfo = question.getQuestionInfo();
+                HistoryInfo historyInfo = new HistoryInfo();
+                historyInfo.setHistory(savedHistory);
+                historyInfo.setQuestion(question);
+                historyInfo.setWrong(info.getWrong());
 
-            HistoryInfo historyInfo = new HistoryInfo();
-            historyInfo.setHistory(savedHistory);
-            historyInfo.setQuestion(question);
-            historyInfo.setWrong(info.getWrong());
-
-            historyInfoRepository.save(historyInfo);
+                historyInfoRepository.save(historyInfo);
+            }
         }
+
+
     }
 
     @Transactional
