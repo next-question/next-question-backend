@@ -221,7 +221,7 @@ public class QuestionService {
     }
 
     @Transactional
-    public void moveQuestion(String token, MoveQuestionRequest request) throws Exception {
+    public List<FindQuestionsByTypeResponse> moveQuestion(String token, MoveQuestionRequest request) throws Exception {
         String userId = jwtUtility.getUserIdFromToken(token);
 
         // 사용자 조회
@@ -246,14 +246,14 @@ public class QuestionService {
         // 문제 이동
         for (String encryptedQuestionInfoId : request.getEncryptedQuestionInfoIds()) {
             Long questionInfoId = encryptionService.decryptPrimaryKey(encryptedQuestionInfoId);
-            Question question = questionRepository.findByMemberIdAndQuestionInfoId(member.getId(), questionInfoId)
+            Question targetQuestion = questionRepository.findByMemberIdAndQuestionInfoId(member.getId(), questionInfoId)
                     .orElseThrow(() -> new EntityNotFoundException("해당 문제 정보가 존재하지 않습니다."));
 
-            if (!question.getMember().equals(member)) {
+            if (!targetQuestion.getMember().equals(member)) {
                 throw new AccessDeniedException("사용자가 소유한 문제가 아닙니다.");
             }
-            QuestionInfo targetQuestionInfo = question.getQuestionInfo();
-
+            QuestionInfo targetQuestionInfo = targetQuestion.getQuestionInfo();
+            QuestionType type = targetQuestionInfo.getType();
             // 대상 문제집에 동일한 문제가 존재하는지 확인
             boolean isDuplicate = workBookInfoRepository.existsByWorkBookIdAndQuestionInfoId(targetWorkbookId, targetQuestionInfo.getId());
             if (isDuplicate) {
@@ -263,7 +263,26 @@ public class QuestionService {
             WorkBookInfo workBookInfo = workBookInfoRepository.findByWorkBookIdAndQuestionInfoId(
                     sourceWorkBookId, targetQuestionInfo.getId()).get();
             workBookInfo.setWorkBook(targetWorkBook);
+
+            if (type.equals(QuestionType.MULTIPLE_CHOICE)) {
+                sourceWorkBook.setMultipleChoice(sourceWorkBook.getMultipleChoice() - 1);
+                targetWorkBook.setMultipleChoice(targetWorkBook.getMultipleChoice() + 1);
+            }
+            else if (type.equals(QuestionType.FILL_IN_THE_BLANK)) {
+                sourceWorkBook.setFillInTheBlank(sourceWorkBook.getFillInTheBlank() - 1);
+                targetWorkBook.setFillInTheBlank(targetWorkBook.getFillInTheBlank() + 1);
+            }
+            else if (type.equals(QuestionType.OX)) {
+                sourceWorkBook.setOx(sourceWorkBook.getOx() - 1);
+                targetWorkBook.setOx(targetWorkBook.getOx() + 1);
+            }
+
         }
+        List<FindQuestionsByTypeResponse> responses = new ArrayList<>();
+        responses.add(classifyQuestionType(member, sourceWorkBook));
+        responses.add(classifyQuestionType(member, targetWorkBook));
+
+        return responses;
     }
 
 

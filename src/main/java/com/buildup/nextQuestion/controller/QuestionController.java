@@ -79,11 +79,8 @@ public class QuestionController {
             @RequestBody MoveQuestionRequest request
     ) throws Exception
     {
-        questionService.moveQuestion(token, request);
-        return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "문제를 성공적으로 이동했습니다."
-        ));
+        List<FindQuestionsByTypeResponse> responses = questionService.moveQuestion(token, request);
+        return ResponseEntity.ok(responses);
     }
 
 }
