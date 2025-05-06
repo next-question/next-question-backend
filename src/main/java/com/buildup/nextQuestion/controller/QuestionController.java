@@ -1,5 +1,6 @@
 package com.buildup.nextQuestion.controller;
 import com.buildup.nextQuestion.dto.question.*;
+import com.buildup.nextQuestion.dto.solving.FindQuestionsByTypeResponse;
 import com.buildup.nextQuestion.service.FileService;
 import com.buildup.nextQuestion.service.QuestionGenerationFacade;
 import com.buildup.nextQuestion.service.QuestionService;
@@ -64,11 +65,11 @@ public class QuestionController {
     @DeleteMapping("member/questions/delete")
     public ResponseEntity<?> deleteQuestion(
             @RequestHeader("Authorization") String token,
-            @RequestBody List<String> encryptedQuestionInfoIds
+            @RequestBody DeleteQuestionRequest request
             ) throws Exception
     {
-            questionService.deleteQuestion(token, encryptedQuestionInfoIds);
-            return ResponseEntity.ok("문제가 성공적으로 삭제되었습니다.");
+        FindQuestionsByTypeResponse response = questionService.deleteQuestion(token, request);
+        return ResponseEntity.ok(response);
     }
 
 

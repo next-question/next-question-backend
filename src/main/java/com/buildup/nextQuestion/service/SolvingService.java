@@ -449,7 +449,7 @@ public class SolvingService {
         attendanceRepository.save(attendance);
     }
     @Transactional(readOnly = true)
-    public FindQuestionsByTypeResponse findQuestionsByTypeResponse(String token, List<String> encryptedWorkBookIds) throws Exception {
+    public FindQuestionsByTypeResponse findQuestionsByType(String token, List<String> encryptedWorkBookIds) throws Exception {
         String userId = jwtUtility.getUserIdFromToken(token);
 
         Member member = memberFinder.findMember(userId);
