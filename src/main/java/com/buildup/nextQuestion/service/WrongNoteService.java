@@ -16,6 +16,7 @@ import com.buildup.nextQuestion.dto.wrongNote.*;
 
 
 import java.sql.Timestamp;
+import java.time.LocalTime;
 import java.util.*;
 import java.time.LocalDate;
 import java.util.stream.Collectors;
@@ -89,6 +90,7 @@ public class WrongNoteService {
             String historyId = historyInfo.getHistory().getId().toString();
             Question question = historyInfo.getQuestion();
             QuestionInfo questionInfo = question.getQuestionInfo();
+            Timestamp solvedDate = historyInfo.getHistory().getSolvedDate();
 
             WorkBookInfo workBookInfo = workBookInfoRepository.findByWorkBookInAndQuestionInfoId(workBooks, questionInfo.getId());
             WorkBook workBook = workBookInfo.getWorkBook();
@@ -99,6 +101,9 @@ public class WrongNoteService {
                 GroupedWorkBookDTO newGroup = new GroupedWorkBookDTO();
                 newGroup.setHistoryId(historyId);
                 newGroup.setMainWorkBookName(workBookName); // 여기서 메인 워크북 이름 설정
+                newGroup.setWorkBookCount(0);
+                newGroup.setQuestionCount(0);
+                newGroup.setSolvedDate(solvedDate);
                 newGroup.setWorkBooks(new ArrayList<>());
                 return newGroup;
             });
@@ -111,9 +116,12 @@ public class WrongNoteService {
                         WrongNoteWorkBookDTO newWorkBook = new WrongNoteWorkBookDTO();
                         newWorkBook.setEncryptedWorkBookId(encryptedWorkBookId);
                         newWorkBook.setWorkBookName(workBookName);
+                        groupedWorkBook.setWorkBookCount(groupedWorkBook.getWorkBookCount() + 1);
                         groupedWorkBook.getWorkBooks().add(newWorkBook);
                         return newWorkBook;
                     });
+
+            groupedWorkBook.setQuestionCount(groupedWorkBook.getQuestionCount() + 1);
         }
 
 
