@@ -3,6 +3,7 @@ package com.buildup.nextQuestion.service;
 import com.buildup.nextQuestion.domain.*;
 import com.buildup.nextQuestion.domain.enums.QuestionType;
 import com.buildup.nextQuestion.dto.question.NormalExamOption;
+import com.buildup.nextQuestion.dto.question.NormalQuestionInfo;
 import com.buildup.nextQuestion.dto.solving.FindQuestionsByNormalExamResponse;
 import com.buildup.nextQuestion.dto.solving.*;
 import com.buildup.nextQuestion.repository.*;
@@ -44,10 +45,10 @@ public class SolvingService {
         Member member = memberFinder.findMember(userId);
 
         // 전체 문제 리스트 생성
-        List<Question> requestedQuestions = new ArrayList<>();
+        List<NormalQuestionInfo> requestedQuestions = new ArrayList<>();
 
-        for (String encryptedId : request.getEncryptedWorkBookIds()) {
-            Long workBookId = encryptionService.decryptPrimaryKey(encryptedId);
+        for (String encryptedWorkbookId : request.getEncryptedWorkBookIds()) {
+            Long workBookId = encryptionService.decryptPrimaryKey(encryptedWorkbookId);
 
             if (!workBookRepository.existsByIdAndMemberId(workBookId, member.getId())) {
                 throw new AccessDeniedException("사용자가 소유한 문제집이 아닙니다.");
@@ -57,10 +58,13 @@ public class SolvingService {
 
             for (WorkBookInfo workBookInfo : workBookInfos) {
                 Long questionInfoId = workBookInfo.getQuestionInfo().getId();
-                Optional<Question> questionOpt = questionRepository.findByMemberIdAndQuestionInfoId(member.getId(), questionInfoId);
+                Optional<Question> question = questionRepository.findByMemberIdAndQuestionInfoId(member.getId(), questionInfoId);
 
-                questionOpt.ifPresent(q -> {
-                    if (!q.getDel()) requestedQuestions.add(q);
+                question.ifPresent(q -> {
+                    if (!q.getDel()) {
+
+                        requestedQuestions.add(new NormalQuestionInfo(q,encryptedWorkbookId));
+                    }
                 });
             }
         }
@@ -77,26 +81,40 @@ public class SolvingService {
         }
     }
 
-    @SneakyThrows
-    private List<FindQuestionsByNormalExamResponse> buildRandomExamResponse(List<Question> questions, int count) {
-        Collections.shuffle(questions);
-        List<Question> selected = questions.subList(0, count);
+    private List<FindQuestionsByNormalExamResponse> buildRandomExamResponse(List<NormalQuestionInfo> questions, int count) {
+        if (questions == null || questions.isEmpty()) {
+            return List.of();
+        }
 
-        return selected.stream().map(this::mapToResponse).toList();
+        // 무작위 섞기
+        Collections.shuffle(questions);
+
+        int selectCount = Math.min(count, questions.size());
+
+        return questions.stream()
+                .limit(selectCount)
+                .map(this::mapToResponse)
+                .toList();
     }
 
-    private FindQuestionsByNormalExamResponse mapToResponse(Question question) {
+    private FindQuestionsByNormalExamResponse mapToResponse(NormalQuestionInfo normalQuestionInfo) {
         try {
-            QuestionInfo info = question.getQuestionInfo();
+            // 필요한 데이터 꺼내기
+            Question question = normalQuestionInfo.getQuestion();
+            String encryptedWorkbookId = normalQuestionInfo.getEncryptedWorkbookId();
+            QuestionInfo questionInfo = question.getQuestionInfo();
+
             FindQuestionsByNormalExamResponse res = new FindQuestionsByNormalExamResponse();
             res.setEncryptedQuestionId(encryptionService.encryptPrimaryKey(question.getId()));
-            res.setName(info.getName());
-            res.setType(info.getType());
-            res.setAnswer(info.getAnswer());
-            res.setOpt(info.getOption());
+            res.setEncryptedWorkbookId(encryptedWorkbookId);
+            res.setName(questionInfo.getName());
+            res.setType(questionInfo.getType());
+            res.setAnswer(questionInfo.getAnswer());
+            res.setOpt(questionInfo.getOption());
             res.setWrong(question.getWrong());
             res.setRecentSolveTime(question.getRecentSolveTime());
             return res;
+
         } catch (Exception e) {
             throw new RuntimeException("암호화 중 오류 발생", e);
         }
@@ -105,13 +123,21 @@ public class SolvingService {
 
 
 
-    private List<FindQuestionsByNormalExamResponse> buildTypeBasedExamResponse(List<Question> questions, NormalExamOption options, Member member) {
+    private List<FindQuestionsByNormalExamResponse> buildTypeBasedExamResponse(List<NormalQuestionInfo> questionInfos, NormalExamOption options, Member member) {
+        // Question -> NormalQuestionInfo 매핑
+        Map<Long, NormalQuestionInfo> questionIdToInfo = questionInfos.stream()
+                .collect(Collectors.toMap(
+                        info -> info.getQuestion().getId(),
+                        info -> info
+                ));
+
         Map<QuestionType, List<Question>> typeMap = new HashMap<>();
         typeMap.put(QuestionType.OX, new ArrayList<>());
         typeMap.put(QuestionType.MULTIPLE_CHOICE, new ArrayList<>());
         typeMap.put(QuestionType.FILL_IN_THE_BLANK, new ArrayList<>());
 
-        for (Question question : questions) {
+        for (NormalQuestionInfo questionInfo : questionInfos) {
+            Question question = questionInfo.getQuestion();
             typeMap.get(question.getQuestionInfo().getType()).add(question);
         }
 
@@ -127,7 +153,6 @@ public class SolvingService {
             throw new IllegalArgumentException("선택한 문제 유형의 문제가 존재하지 않습니다.");
         }
 
-        // 유형별로 가능한 만큼 선택
         Map<QuestionType, List<Question>> selectedByType = new LinkedHashMap<>();
         int perType = totalCount / typeCount;
         int remainder = totalCount % typeCount;
@@ -143,10 +168,8 @@ public class SolvingService {
             selectedTotal += pickCount;
         }
 
-        // 부족한 문제를 다른 유형에서 추가로 선택
         if (selectedTotal < totalCount) {
             int remaining = totalCount - selectedTotal;
-
             List<Question> remainingPool = new ArrayList<>();
             for (Map.Entry<QuestionType, List<Question>> entry : selectedTypes.entrySet()) {
                 List<Question> pool = entry.getValue();
@@ -155,11 +178,8 @@ public class SolvingService {
                 remainingQuestions.removeAll(alreadySelected);
                 remainingPool.addAll(remainingQuestions);
             }
-
             Collections.shuffle(remainingPool);
             List<Question> extra = remainingPool.subList(0, Math.min(remaining, remainingPool.size()));
-
-            // extra 문제를 선택된 목록에 추가
             for (Question q : extra) {
                 selectedByType.computeIfAbsent(q.getQuestionInfo().getType(), k -> new ArrayList<>()).add(q);
             }
@@ -175,8 +195,15 @@ public class SolvingService {
             throw new IllegalArgumentException("선택된 문제의 수가 요청 수보다 적습니다. (필요: " + totalCount + ", 선택됨: " + selectedQuestions.size() + ")");
         }
 
-        return selectedQuestions.stream().map(this::mapToResponse).toList();
+        // **여기 중요!** Question → NormalQuestionInfo 매핑으로 workbookId 포함된 DTO 생성
+        return selectedQuestions.stream()
+                .map(q -> {
+                    NormalQuestionInfo info = questionIdToInfo.get(q.getId());
+                    return mapToResponse(info);
+                })
+                .toList();
     }
+
 
 
 
