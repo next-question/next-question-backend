@@ -12,6 +12,7 @@ import java.sql.Timestamp;
 @AllArgsConstructor
 public class FindQuestionsByNormalExamResponse {
     private String encryptedQuestionId;
+    private String encryptedWorkbookId;
     private String name;
     private QuestionType type;
     private String answer;
