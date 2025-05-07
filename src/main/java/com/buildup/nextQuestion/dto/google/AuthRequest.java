@@ -9,4 +9,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AuthRequest {
     private String code;
+    private boolean keepLogin;
 }

@@ -38,9 +38,9 @@ public class MemberController {
     }
 
     @PostMapping("public/member/login/local")
-    public ResponseEntity<?> login(@RequestBody LoginRequest loginDTOrequest) {
-            LoginResponse response = memberService.login(loginDTOrequest);
-            return ResponseEntity.ok(response);
+    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginDTOrequest) {
+        LoginResponse response = memberService.login(loginDTOrequest, loginDTOrequest.isKeepLogin());
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("public/members/search")
