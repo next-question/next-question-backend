@@ -29,8 +29,11 @@ public class LocalMemberService {
         String email = registDTORequest.getEmail();
         String nickname = registDTORequest.getNickname();
         // 중복 체크
-        if (localMemberRepository.existsByUserId(userId) || localMemberRepository.existsByEmail(email)) {
-            throw new DuplicateResourceException("이미 존재하는 아이디 또는 이메일입니다.");
+        if (localMemberRepository.existsByUserId(userId)) {
+            throw new DuplicateResourceException("이미 존재하는 아이디입니다.");
+        }
+        if (localMemberRepository.existsByEmail(email)){
+            throw new DuplicateResourceException("이미 존재하는 이메일입니다.");
         }
         if(memberRepository.existsByNickname(nickname)) {
             throw new IllegalArgumentException("동일한 별명을 사용할 수 없습니다.");
