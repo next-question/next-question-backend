@@ -34,17 +34,22 @@ public class MemberService {
     private final AttendanceRepository attendanceRepository;
     private final RefreshTokenService refreshTokenService;
 
-    public LoginResponse login(LoginRequest loginDTOrequest) { //로컬 로그인
+    public LoginResponse login(LoginRequest loginDTOrequest, boolean keepLogin) {
         String userId = loginDTOrequest.getUserId();
         String password = loginDTOrequest.getPassword();
-        // 1. userId로 회원 조회
-        LocalMember localMember = localMemberRepository.findByUserId(userId).orElseThrow(() -> new IllegalArgumentException("아이디 또는 비밀번호가 올바르지 않습니다."));
+
+        // 1. 유저 조회
+        LocalMember localMember = localMemberRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("아이디 또는 비밀번호가 올바르지 않습니다."));
         Member member = localMember.getMember();
+
         // 2. 비밀번호 검증
         if (passwordEncoder.matches(password, localMember.getPassword())) {
-            LoginResponse loginDTOresponse = new LoginResponse(refreshTokenService.createRefreshToken(member), jwtUtility.generateToken(userId, member.getRole()), member.getNickname(), member.getRole());
-            // 3. JWT 토큰 생성 후 반환
-            return loginDTOresponse;
+            // 3. JWT 및 리프레시 토큰 조건 생성
+            String accessToken = jwtUtility.generateToken(userId, member.getRole());
+            String refreshToken = keepLogin ? refreshTokenService.createRefreshToken(member) : null;
+
+            return new LoginResponse(refreshToken, accessToken, member.getNickname(), member.getRole());
         } else {
             throw new IllegalArgumentException("아이디 또는 비밀번호가 올바르지 않습니다.");
         }
