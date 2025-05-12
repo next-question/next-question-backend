@@ -11,6 +11,7 @@ import com.buildup.nextQuestion.dto.google.GoogleResponse;
 import com.buildup.nextQuestion.dto.member.SocialRegistRequest;
 import com.buildup.nextQuestion.repository.MemberRepository;
 import com.buildup.nextQuestion.repository.SocialMemberRepository;
+import com.buildup.nextQuestion.service.security.RefreshTokenService;
 import com.buildup.nextQuestion.utility.JwtUtility;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -31,6 +32,7 @@ public class SocialMemberService {
     private final SocialMemberRepository socialMemberRepository;
     private final JwtUtility jwtUtility;
     private final MemberRepository memberRepository;
+    private final RefreshTokenService refreshTokenService;
 
     @Value("${google.client.id}")
     private String googleClientId;
@@ -68,10 +70,12 @@ public class SocialMemberService {
         return snsId;
     }
 
-    public LoginResponse loginGoogle(String snsId) {
+    public LoginResponse loginGoogle(String snsId, boolean keepLogin) {
         SocialMember socialMember = socialMemberRepository.findBySnsId(snsId).orElseThrow(() -> new IllegalArgumentException("해당 ID가 존재하지 않습니다."));
         Member member = socialMember.getMember();
-        LoginResponse loginDTOresponse = new LoginResponse(jwtUtility.generateToken(snsId, member.getRole()), member.getNickname(), member.getRole());
+        String accessToken = jwtUtility.generateToken(snsId, member.getRole());
+        String refreshToken = keepLogin ? refreshTokenService.createRefreshToken(member) : null;
+        LoginResponse loginDTOresponse = new LoginResponse(refreshToken, accessToken, member.getNickname(), member.getRole());
         // 3. JWT 토큰 생성 후 반환
         return loginDTOresponse;
     }

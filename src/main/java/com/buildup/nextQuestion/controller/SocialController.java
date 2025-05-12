@@ -32,7 +32,7 @@ public class SocialController {
         String authCode = socialMemberService.decodeCode(authRequest.getCode());
         String snsId = socialMemberService.authGoogle(authCode);  // authCode로 snsId 추출
         if (socialMemberRepository.existsBySnsId(snsId)) {
-            LoginResponse response = socialMemberService.loginGoogle(snsId);
+            LoginResponse response = socialMemberService.loginGoogle(snsId, authRequest.isKeepLogin());
             return ResponseEntity.ok(response);  // 로그인 응답 반환
         } else {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("snsId", snsId, "error", "아아디가 존재하지 않습니다. 회원가입을 진행해 주세요."));

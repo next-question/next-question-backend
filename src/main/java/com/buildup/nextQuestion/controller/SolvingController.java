@@ -3,7 +3,6 @@ package com.buildup.nextQuestion.controller;
 import com.buildup.nextQuestion.dto.solving.*;
 import com.buildup.nextQuestion.service.SolvingService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -76,7 +75,7 @@ public class SolvingController {
             @RequestHeader("Authorization") String token,
             @RequestBody List<String> request
     ) throws Exception {
-        FindQuestionsByTypeResponse response = solvingService.findQuestionsByTypeResponse(token, request);
+        FindQuestionsByTypeResponse response = solvingService.findQuestionsByType(token, request);
         return ResponseEntity.ok(response);
     }
 

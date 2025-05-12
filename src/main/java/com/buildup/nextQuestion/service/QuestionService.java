@@ -1,9 +1,11 @@
 package com.buildup.nextQuestion.service;
 
 import com.buildup.nextQuestion.domain.*;
+import com.buildup.nextQuestion.domain.enums.QuestionType;
 import com.buildup.nextQuestion.dto.question.MoveQuestionRequest;
 import com.buildup.nextQuestion.dto.question.SaveQuestionRequest;
 import com.buildup.nextQuestion.dto.question.FindQuestionByMemberResponse;
+import com.buildup.nextQuestion.dto.solving.FindQuestionsByTypeResponse;
 import com.buildup.nextQuestion.exception.DuplicateResourceException;
 import com.buildup.nextQuestion.exception.AccessDeniedException;
 import com.buildup.nextQuestion.dto.question.*;
@@ -11,6 +13,7 @@ import com.buildup.nextQuestion.repository.*;
 import com.buildup.nextQuestion.support.MemberFinder;
 import com.buildup.nextQuestion.utility.JwtUtility;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityNotFoundException;
@@ -34,7 +37,7 @@ public class QuestionService {
     private final QuestionRepository questionRepository;
     private final EncryptionService encryptionService;
     private final JwtUtility jwtUtility;
-    private final LocalMemberRepository localMemberRepository;
+
     private final WorkBookRepository workBookRepository;
     private final WorkBookInfoRepository workBookInfoRepository;
     private final MemberFinder memberFinder;
@@ -43,6 +46,7 @@ public class QuestionService {
     @Transactional
     public List<UploadFileByMemberResponse> saveAll(JsonNode jsonNode) throws Exception {
         ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
         JsonNode questionsNode = jsonNode.get("questions");
         List<UploadFileByMemberResponse> response = new ArrayList<>();
@@ -148,10 +152,38 @@ public class QuestionService {
         return response;
     }
 
+    static FindQuestionsByTypeResponse classifyQuestionType (Member member, WorkBook workBook) throws Exception {
+        int multipleChoice = 0;
+        int fillInTheBlank = 0;
+        int ox = 0;
+
+
+            multipleChoice += workBook.getMultipleChoice();
+            fillInTheBlank += workBook.getFillInTheBlank();
+            ox += workBook.getOx();
+
+
+        FindQuestionsByTypeResponse response = new FindQuestionsByTypeResponse();
+        response.setMultipleChoice(multipleChoice);
+        response.setFillInTheBlank(fillInTheBlank);
+        response.setOx(ox);
+
+        return response;
+    }
+
     @Transactional
-    public void deleteQuestion(String token, List<String> encryptedQuestionIds) throws Exception {
+    public FindQuestionsByTypeResponse deleteQuestion(String token, DeleteQuestionRequest request) throws Exception {
         String userId = jwtUtility.getUserIdFromToken(token);
         Member member = memberFinder.findMember(userId);
+
+        Long workBookId = encryptionService.decryptPrimaryKey(request.getEncryptedWorkBookId());
+        WorkBook workBook = workBookRepository.findById(workBookId)
+                .orElseThrow(() -> new EntityNotFoundException("해당 문제집을 찾을 수 없습니다."));
+
+        if (!workBook.getMember().getId().equals(member.getId())) {
+            throw new SecurityException("접근 권한이 없는 문제집입니다.");
+        }
+        List<String> encryptedQuestionIds = request.getEncryptedQuestionIds();
 
         if (encryptedQuestionIds == null || encryptedQuestionIds.isEmpty()) {
             throw new EntityNotFoundException("삭제할 문제가 없습니다.");
@@ -164,6 +196,7 @@ public class QuestionService {
             Question question = questionRepository.findById(questionId)
                     .orElseThrow(() -> new EntityNotFoundException("해당 문제를 찾을 수 없습니다."));
 
+            QuestionType type = question.getQuestionInfo().getType();
             // 해당 사용자의 문제인지 검증 (소유자가 아니면 예외 발생)
             if (!question.getMember().getId().equals(member.getId())) {
                 throw new AccessDeniedException("해당 문제를 삭제할 권한이 없습니다.");
@@ -171,11 +204,24 @@ public class QuestionService {
 
             // 삭제 처리
             question.setDel(true);
+            if (type.equals(QuestionType.MULTIPLE_CHOICE)) {
+                workBook.setMultipleChoice(workBook.getMultipleChoice() - 1);
+            }
+            else if (type.equals(QuestionType.FILL_IN_THE_BLANK)) {
+                workBook.setFillInTheBlank(workBook.getFillInTheBlank() - 1);
+            }
+            else if (type.equals(QuestionType.OX)) {
+                workBook.setOx(workBook.getOx() - 1);
+            }
         }
+        FindQuestionsByTypeResponse response = classifyQuestionType(member, workBook);
+
+        return response;
+
     }
 
     @Transactional
-    public void moveQuestion(String token, MoveQuestionRequest request) throws Exception {
+    public List<FindQuestionsByTypeResponse> moveQuestion(String token, MoveQuestionRequest request) throws Exception {
         String userId = jwtUtility.getUserIdFromToken(token);
 
         // 사용자 조회
@@ -200,14 +246,14 @@ public class QuestionService {
         // 문제 이동
         for (String encryptedQuestionInfoId : request.getEncryptedQuestionInfoIds()) {
             Long questionInfoId = encryptionService.decryptPrimaryKey(encryptedQuestionInfoId);
-            Question question = questionRepository.findByMemberIdAndQuestionInfoId(member.getId(), questionInfoId)
+            Question targetQuestion = questionRepository.findByMemberIdAndQuestionInfoId(member.getId(), questionInfoId)
                     .orElseThrow(() -> new EntityNotFoundException("해당 문제 정보가 존재하지 않습니다."));
 
-            if (!question.getMember().equals(member)) {
+            if (!targetQuestion.getMember().equals(member)) {
                 throw new AccessDeniedException("사용자가 소유한 문제가 아닙니다.");
             }
-            QuestionInfo targetQuestionInfo = question.getQuestionInfo();
-
+            QuestionInfo targetQuestionInfo = targetQuestion.getQuestionInfo();
+            QuestionType type = targetQuestionInfo.getType();
             // 대상 문제집에 동일한 문제가 존재하는지 확인
             boolean isDuplicate = workBookInfoRepository.existsByWorkBookIdAndQuestionInfoId(targetWorkbookId, targetQuestionInfo.getId());
             if (isDuplicate) {
@@ -217,7 +263,26 @@ public class QuestionService {
             WorkBookInfo workBookInfo = workBookInfoRepository.findByWorkBookIdAndQuestionInfoId(
                     sourceWorkBookId, targetQuestionInfo.getId()).get();
             workBookInfo.setWorkBook(targetWorkBook);
+
+            if (type.equals(QuestionType.MULTIPLE_CHOICE)) {
+                sourceWorkBook.setMultipleChoice(sourceWorkBook.getMultipleChoice() - 1);
+                targetWorkBook.setMultipleChoice(targetWorkBook.getMultipleChoice() + 1);
+            }
+            else if (type.equals(QuestionType.FILL_IN_THE_BLANK)) {
+                sourceWorkBook.setFillInTheBlank(sourceWorkBook.getFillInTheBlank() - 1);
+                targetWorkBook.setFillInTheBlank(targetWorkBook.getFillInTheBlank() + 1);
+            }
+            else if (type.equals(QuestionType.OX)) {
+                sourceWorkBook.setOx(sourceWorkBook.getOx() - 1);
+                targetWorkBook.setOx(targetWorkBook.getOx() + 1);
+            }
+
         }
+        List<FindQuestionsByTypeResponse> responses = new ArrayList<>();
+        responses.add(classifyQuestionType(member, sourceWorkBook));
+        responses.add(classifyQuestionType(member, targetWorkBook));
+
+        return responses;
     }
 
 

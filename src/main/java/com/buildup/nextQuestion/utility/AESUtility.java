@@ -9,7 +9,7 @@ import java.util.Base64;
 public class AESUtility {
 
     private static final String ALGORITHM = "AES";
-    private static final int KEY_SIZE = 128;
+    private static final int KEY_SIZE = 256;
     private static final String TRANSFORMATION = "AES";
 
     // AES 키 생성

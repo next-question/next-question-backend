@@ -3,6 +3,7 @@ package com.buildup.nextQuestion.service;
 import com.buildup.nextQuestion.domain.*;
 import com.buildup.nextQuestion.domain.enums.QuestionType;
 import com.buildup.nextQuestion.dto.question.NormalExamOption;
+import com.buildup.nextQuestion.dto.question.NormalQuestionInfo;
 import com.buildup.nextQuestion.dto.solving.FindQuestionsByNormalExamResponse;
 import com.buildup.nextQuestion.dto.solving.*;
 import com.buildup.nextQuestion.repository.*;
@@ -44,10 +45,10 @@ public class SolvingService {
         Member member = memberFinder.findMember(userId);
 
         // 전체 문제 리스트 생성
-        List<Question> requestedQuestions = new ArrayList<>();
+        List<NormalQuestionInfo> requestedQuestions = new ArrayList<>();
 
-        for (String encryptedId : request.getEncryptedWorkBookIds()) {
-            Long workBookId = encryptionService.decryptPrimaryKey(encryptedId);
+        for (String encryptedWorkbookId : request.getEncryptedWorkBookIds()) {
+            Long workBookId = encryptionService.decryptPrimaryKey(encryptedWorkbookId);
 
             if (!workBookRepository.existsByIdAndMemberId(workBookId, member.getId())) {
                 throw new AccessDeniedException("사용자가 소유한 문제집이 아닙니다.");
@@ -57,10 +58,13 @@ public class SolvingService {
 
             for (WorkBookInfo workBookInfo : workBookInfos) {
                 Long questionInfoId = workBookInfo.getQuestionInfo().getId();
-                Optional<Question> questionOpt = questionRepository.findByMemberIdAndQuestionInfoId(member.getId(), questionInfoId);
+                Optional<Question> question = questionRepository.findByMemberIdAndQuestionInfoId(member.getId(), questionInfoId);
 
-                questionOpt.ifPresent(q -> {
-                    if (!q.getDel()) requestedQuestions.add(q);
+                question.ifPresent(q -> {
+                    if (!q.getDel()) {
+
+                        requestedQuestions.add(new NormalQuestionInfo(q,encryptedWorkbookId));
+                    }
                 });
             }
         }
@@ -77,26 +81,40 @@ public class SolvingService {
         }
     }
 
-    @SneakyThrows
-    private List<FindQuestionsByNormalExamResponse> buildRandomExamResponse(List<Question> questions, int count) {
-        Collections.shuffle(questions);
-        List<Question> selected = questions.subList(0, count);
+    private List<FindQuestionsByNormalExamResponse> buildRandomExamResponse(List<NormalQuestionInfo> questions, int count) {
+        if (questions == null || questions.isEmpty()) {
+            return List.of();
+        }
 
-        return selected.stream().map(this::mapToResponse).toList();
+        // 무작위 섞기
+        Collections.shuffle(questions);
+
+        int selectCount = Math.min(count, questions.size());
+
+        return questions.stream()
+                .limit(selectCount)
+                .map(this::mapToResponse)
+                .toList();
     }
 
-    private FindQuestionsByNormalExamResponse mapToResponse(Question question) {
+    private FindQuestionsByNormalExamResponse mapToResponse(NormalQuestionInfo normalQuestionInfo) {
         try {
-            QuestionInfo info = question.getQuestionInfo();
+            // 필요한 데이터 꺼내기
+            Question question = normalQuestionInfo.getQuestion();
+            String encryptedWorkbookId = normalQuestionInfo.getEncryptedWorkbookId();
+            QuestionInfo questionInfo = question.getQuestionInfo();
+
             FindQuestionsByNormalExamResponse res = new FindQuestionsByNormalExamResponse();
             res.setEncryptedQuestionId(encryptionService.encryptPrimaryKey(question.getId()));
-            res.setName(info.getName());
-            res.setType(info.getType());
-            res.setAnswer(info.getAnswer());
-            res.setOpt(info.getOption());
+            res.setEncryptedWorkbookId(encryptedWorkbookId);
+            res.setName(questionInfo.getName());
+            res.setType(questionInfo.getType());
+            res.setAnswer(questionInfo.getAnswer());
+            res.setOpt(questionInfo.getOption());
             res.setWrong(question.getWrong());
             res.setRecentSolveTime(question.getRecentSolveTime());
             return res;
+
         } catch (Exception e) {
             throw new RuntimeException("암호화 중 오류 발생", e);
         }
@@ -105,28 +123,28 @@ public class SolvingService {
 
 
 
-    private List<FindQuestionsByNormalExamResponse> buildTypeBasedExamResponse(List<Question> questions, NormalExamOption options, Member member) {
-        // 문제 유형별 분류
+    private List<FindQuestionsByNormalExamResponse> buildTypeBasedExamResponse(List<NormalQuestionInfo> questionInfos, NormalExamOption options, Member member) {
+        // Question -> NormalQuestionInfo 매핑
+        Map<Long, NormalQuestionInfo> questionIdToInfo = questionInfos.stream()
+                .collect(Collectors.toMap(
+                        info -> info.getQuestion().getId(),
+                        info -> info
+                ));
+
         Map<QuestionType, List<Question>> typeMap = new HashMap<>();
         typeMap.put(QuestionType.OX, new ArrayList<>());
         typeMap.put(QuestionType.MULTIPLE_CHOICE, new ArrayList<>());
         typeMap.put(QuestionType.FILL_IN_THE_BLANK, new ArrayList<>());
 
-        for (Question question : questions) {
+        for (NormalQuestionInfo questionInfo : questionInfos) {
+            Question question = questionInfo.getQuestion();
             typeMap.get(question.getQuestionInfo().getType()).add(question);
         }
 
-        // 사용자 선택 유형 필터
         Map<QuestionType, List<Question>> selectedTypes = new LinkedHashMap<>();
-        if (options.isOx() && !typeMap.get(QuestionType.OX).isEmpty()) {
-            selectedTypes.put(QuestionType.OX, typeMap.get(QuestionType.OX));
-        }
-        if (options.isMultiple() && !typeMap.get(QuestionType.MULTIPLE_CHOICE).isEmpty()) {
-            selectedTypes.put(QuestionType.MULTIPLE_CHOICE, typeMap.get(QuestionType.MULTIPLE_CHOICE));
-        }
-        if (options.isBlank() && !typeMap.get(QuestionType.FILL_IN_THE_BLANK).isEmpty()) {
-            selectedTypes.put(QuestionType.FILL_IN_THE_BLANK, typeMap.get(QuestionType.FILL_IN_THE_BLANK));
-        }
+        if (options.isOx()) selectedTypes.put(QuestionType.OX, typeMap.get(QuestionType.OX));
+        if (options.isMultiple()) selectedTypes.put(QuestionType.MULTIPLE_CHOICE, typeMap.get(QuestionType.MULTIPLE_CHOICE));
+        if (options.isBlank()) selectedTypes.put(QuestionType.FILL_IN_THE_BLANK, typeMap.get(QuestionType.FILL_IN_THE_BLANK));
 
         int totalCount = options.getCount();
         int typeCount = selectedTypes.size();
@@ -135,37 +153,58 @@ public class SolvingService {
             throw new IllegalArgumentException("선택한 문제 유형의 문제가 존재하지 않습니다.");
         }
 
-        // 균등 분배
+        Map<QuestionType, List<Question>> selectedByType = new LinkedHashMap<>();
         int perType = totalCount / typeCount;
         int remainder = totalCount % typeCount;
 
-        Map<QuestionType, Integer> distribution = new HashMap<>();
-        for (QuestionType type : selectedTypes.keySet()) {
-            distribution.put(type, perType + (remainder-- > 0 ? 1 : 0));
+        int selectedTotal = 0;
+
+        for (Map.Entry<QuestionType, List<Question>> entry : selectedTypes.entrySet()) {
+            List<Question> pool = entry.getValue();
+            Collections.shuffle(pool);
+            int needed = perType + (remainder-- > 0 ? 1 : 0);
+            int pickCount = Math.min(needed, pool.size());
+            selectedByType.put(entry.getKey(), pool.subList(0, pickCount));
+            selectedTotal += pickCount;
         }
 
-        // 선택된 문제들
-        List<Question> selectedQuestions = new ArrayList<>();
-        List<String> shortageMessages = new ArrayList<>();
-
-        for (Map.Entry<QuestionType, Integer> entry : distribution.entrySet()) {
-            List<Question> pool = selectedTypes.get(entry.getKey());
-            int needed = entry.getValue();
-
-            if (pool.size() < needed) {
-                shortageMessages.add(entry.getKey() + " 유형의 문제가 부족합니다. (필요: " + needed + "개, 존재: " + pool.size() + "개)");
-            } else {
-                Collections.shuffle(pool);
-                selectedQuestions.addAll(pool.subList(0, needed));
+        if (selectedTotal < totalCount) {
+            int remaining = totalCount - selectedTotal;
+            List<Question> remainingPool = new ArrayList<>();
+            for (Map.Entry<QuestionType, List<Question>> entry : selectedTypes.entrySet()) {
+                List<Question> pool = entry.getValue();
+                List<Question> alreadySelected = selectedByType.get(entry.getKey());
+                List<Question> remainingQuestions = new ArrayList<>(pool);
+                remainingQuestions.removeAll(alreadySelected);
+                remainingPool.addAll(remainingQuestions);
+            }
+            Collections.shuffle(remainingPool);
+            List<Question> extra = remainingPool.subList(0, Math.min(remaining, remainingPool.size()));
+            for (Question q : extra) {
+                selectedByType.computeIfAbsent(q.getQuestionInfo().getType(), k -> new ArrayList<>()).add(q);
             }
         }
 
-        if (!shortageMessages.isEmpty()) {
-            throw new IllegalArgumentException("요청한 문제를 출제할 수 없습니다.\n" + String.join("\n", shortageMessages));
+        // 최종 선택된 문제 리스트 구성
+        List<Question> selectedQuestions = new ArrayList<>();
+        for (List<Question> list : selectedByType.values()) {
+            selectedQuestions.addAll(list);
         }
 
-        return selectedQuestions.stream().map(this::mapToResponse).toList();
+        if (selectedQuestions.size() < totalCount) {
+            throw new IllegalArgumentException("선택된 문제의 수가 요청 수보다 적습니다. (필요: " + totalCount + ", 선택됨: " + selectedQuestions.size() + ")");
+        }
+
+        // **여기 중요!** Question → NormalQuestionInfo 매핑으로 workbookId 포함된 DTO 생성
+        return selectedQuestions.stream()
+                .map(q -> {
+                    NormalQuestionInfo info = questionIdToInfo.get(q.getId());
+                    return mapToResponse(info);
+                })
+                .toList();
     }
+
+
 
 
 
@@ -214,10 +253,6 @@ public class SolvingService {
         return response;
     }
 
-    private List<QuestionInfo> selectRandomQuestions(List<QuestionInfo> questionList, int count) {
-        Collections.shuffle(questionList);
-        return questionList.subList(0, Math.min(count, questionList.size()));
-    }
 
     @Transactional
     public void saveHistoryByExam(String token, SaveHistoryByExamRequest request) throws Exception {
@@ -225,7 +260,23 @@ public class SolvingService {
 
         Member member = memberFinder.findMember(userId);
 
-        // 기록 저장
+        // 기록 개수 확인
+        List<History> existingHistories = historyRepository
+                .findByMemberOrderBySolvedDateAsc(member);
+
+        if (existingHistories.size() >= 30) {
+            int toDeleteCount = existingHistories.size() - 29; // 29개로 맞추고 새로운 1개 추가 예정
+            List<History> toDelete = existingHistories.subList(0, toDeleteCount);
+
+            // historyInfo 먼저 삭제
+            for (History history : toDelete) {
+                List<HistoryInfo> infos = historyInfoRepository.findByHistory(history);
+                historyInfoRepository.deleteAll(infos);
+            }
+            historyRepository.deleteAll(toDelete);
+        }
+
+        // 새로운 기록 저장
         History history = new History();
         history.setMember(member);
         history.setSolvedDate(new Timestamp(System.currentTimeMillis()));
@@ -233,25 +284,28 @@ public class SolvingService {
 
         History savedHistory = historyRepository.save(history);
 
-        WorkBook workBook = workBookRepository.findById(encryptionService.decryptPrimaryKey(request.getEncryptedWorkBookId())).get();
-        workBook.setRecentSolveDate(new Timestamp(System.currentTimeMillis()));
+        for (WorkBookInfoDTO workBookInfoDTO : request.getWorkBookInfoDTOS()) {
+            WorkBook workBook = workBookRepository
+                    .findById(encryptionService.decryptPrimaryKey(workBookInfoDTO.getEncryptedWorkBookId()))
+                    .orElseThrow(() -> new EntityNotFoundException("워크북을 찾을 수 없습니다."));
+            workBook.setRecentSolveDate(new Timestamp(System.currentTimeMillis()));
 
-        List<ExamInfoDTO> infos = request.getInfo();
-        for (ExamInfoDTO info : infos) {
-            Long questionId = encryptionService.decryptPrimaryKey(info.getEncryptedQuestionId());
-            Question question = questionRepository.findById(questionId)
-                    .orElseThrow(() -> new EntityNotFoundException("해당 문제를 찾을 수 없습니다."));
+            List<ExamInfoDTO> infos = workBookInfoDTO.getInfo();
+            for (ExamInfoDTO info : infos) {
+                Long questionId = encryptionService.decryptPrimaryKey(info.getEncryptedQuestionId());
+                Question question = questionRepository.findById(questionId)
+                        .orElseThrow(() -> new EntityNotFoundException("해당 문제를 찾을 수 없습니다."));
 
-            QuestionInfo questionInfo = question.getQuestionInfo();
+                HistoryInfo historyInfo = new HistoryInfo();
+                historyInfo.setHistory(savedHistory);
+                historyInfo.setQuestion(question);
+                historyInfo.setWrong(info.getWrong());
 
-            HistoryInfo historyInfo = new HistoryInfo();
-            historyInfo.setHistory(savedHistory);
-            historyInfo.setQuestion(question);
-            historyInfo.setWrong(info.getWrong());
-
-            historyInfoRepository.save(historyInfo);
+                historyInfoRepository.save(historyInfo);
+            }
         }
     }
+
 
     @Transactional
     public List<FindHistoryByMemberResponse> findHistoryByMember(String token) throws Exception {
@@ -422,7 +476,7 @@ public class SolvingService {
         attendanceRepository.save(attendance);
     }
     @Transactional(readOnly = true)
-    public FindQuestionsByTypeResponse findQuestionsByTypeResponse(String token, List<String> encryptedWorkBookIds) throws Exception {
+    public FindQuestionsByTypeResponse findQuestionsByType(String token, List<String> encryptedWorkBookIds) throws Exception {
         String userId = jwtUtility.getUserIdFromToken(token);
 
         Member member = memberFinder.findMember(userId);

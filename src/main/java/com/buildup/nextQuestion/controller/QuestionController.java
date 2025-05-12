@@ -1,5 +1,6 @@
 package com.buildup.nextQuestion.controller;
 import com.buildup.nextQuestion.dto.question.*;
+import com.buildup.nextQuestion.dto.solving.FindQuestionsByTypeResponse;
 import com.buildup.nextQuestion.service.FileService;
 import com.buildup.nextQuestion.service.QuestionGenerationFacade;
 import com.buildup.nextQuestion.service.QuestionService;
@@ -23,24 +24,23 @@ public class QuestionController {
 
 
     @PostMapping("public/questions/upload")
-    public ResponseEntity<?> uploadFileByGuest(@RequestPart MultipartFile file) throws IOException {
-            fileService.validateFile(file);
+    public ResponseEntity<?> uploadFileByGuest(@ModelAttribute UploadFileByGuestRequest request) throws IOException {
+            fileService.validateFile(request.getFile());
 
-
-            JsonNode jsonNode = questionGenerationFacade.generateQuestionByGuest(file);
-            return ResponseEntity.ok(jsonNode);
+            JsonNode response = questionGenerationFacade.generateQuestionByGuest(request);
+            return ResponseEntity.ok(response);
     }
 
     @PostMapping("member/questions/upload")
     public ResponseEntity<?> uploadFileByMember(
             @RequestHeader("Authorization") String token,
-            @ModelAttribute UploadFileByMemberReqeust uploadFileByMemberReqeust
+            @ModelAttribute UploadFileByMemberRequest request
             ) throws Exception {
-            MultipartFile pdfFile = uploadFileByMemberReqeust.getFile();
+            MultipartFile pdfFile = request.getFile();
 
             fileService.validateFile(pdfFile);
 
-        List<UploadFileByMemberResponse> response = questionGenerationFacade.generateQuestionByMember(pdfFile, uploadFileByMemberReqeust.getNumOfQuestions());
+        List<UploadFileByMemberResponse> response = questionGenerationFacade.generateQuestionByMember(request);
 
         return ResponseEntity.ok(response);
     }
@@ -65,11 +65,11 @@ public class QuestionController {
     @DeleteMapping("member/questions/delete")
     public ResponseEntity<?> deleteQuestion(
             @RequestHeader("Authorization") String token,
-            @RequestBody List<String> encryptedQuestionInfoIds
+            @RequestBody DeleteQuestionRequest request
             ) throws Exception
     {
-            questionService.deleteQuestion(token, encryptedQuestionInfoIds);
-            return ResponseEntity.ok("문제가 성공적으로 삭제되었습니다.");
+        FindQuestionsByTypeResponse response = questionService.deleteQuestion(token, request);
+        return ResponseEntity.ok(response);
     }
 
 
@@ -79,11 +79,8 @@ public class QuestionController {
             @RequestBody MoveQuestionRequest request
     ) throws Exception
     {
-        questionService.moveQuestion(token, request);
-        return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "문제를 성공적으로 이동했습니다."
-        ));
+        List<FindQuestionsByTypeResponse> responses = questionService.moveQuestion(token, request);
+        return ResponseEntity.ok(responses);
     }
 
 }

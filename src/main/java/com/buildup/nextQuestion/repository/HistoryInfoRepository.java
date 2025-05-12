@@ -9,5 +9,6 @@ import java.util.List;
 
 public interface HistoryInfoRepository extends JpaRepository<HistoryInfo, Long> {
     List<HistoryInfo> findAllByHistoryId(Long historyId);
-    List<HistoryInfo> findByWrongIsTrueAndHistoryIdIn(List<Long> historyIds);
+    List<HistoryInfo> findByWrongIsTrueAndHistoryIn(List<History> histories);
+    List<HistoryInfo> findByHistory(History history);
 }
