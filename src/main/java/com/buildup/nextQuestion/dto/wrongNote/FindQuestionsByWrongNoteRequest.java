@@ -10,5 +10,5 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class FindQuestionsByWrongNoteRequest {
-    private List<Long> historyIds;
+    private Long historyId;
 }

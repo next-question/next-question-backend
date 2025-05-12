@@ -141,10 +141,10 @@ public class WrongNoteService {
         Member member = memberFinder.findMember(userId);
 
         FindQuestionsByWrongNoteResponse response = new FindQuestionsByWrongNoteResponse();
-        List<Long> historyIds = request.getHistoryIds();  // 받아온 historyId 리스트
+        Long historyId = request.getHistoryId();  // 받아온 historyId 리스트
 
         // 틀린 문제만 필터링하여 찾기
-        List<HistoryInfo> wrongHistoryInfos = historyInfoRepository.findByWrongIsTrueAndHistoryIdIn(historyIds);
+        List<HistoryInfo> wrongHistoryInfos = historyInfoRepository.findByWrongIsTrueAndHistoryId(historyId);
         if (wrongHistoryInfos.isEmpty()) {
             throw new EntityNotFoundException("해당 기간 오답 문제를 찾는 도중 오류가 발생했습니다.");
         }
