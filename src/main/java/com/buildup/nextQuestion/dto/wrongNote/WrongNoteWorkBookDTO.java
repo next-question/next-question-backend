@@ -9,6 +9,7 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class FindQuestionsByWrongNoteRequest {
-    private Long historyId;
+public class WrongNoteWorkBookDTO {
+    private String encryptedWorkBookId;
+    private String workBookName;
 }
