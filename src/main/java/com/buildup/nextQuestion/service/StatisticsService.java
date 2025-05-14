@@ -11,7 +11,6 @@ import com.buildup.nextQuestion.dto.statistics.QuestionStatisticsRequest;
 import com.buildup.nextQuestion.mapper.QuestionMapper;
 import com.buildup.nextQuestion.repository.HistoryInfoRepository;
 import com.buildup.nextQuestion.repository.HistoryRepository;
-import com.buildup.nextQuestion.repository.QuestionRepository;
 import com.buildup.nextQuestion.support.MemberFinder;
 import com.buildup.nextQuestion.utility.JwtUtility;
 import lombok.RequiredArgsConstructor;
@@ -22,9 +21,7 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service

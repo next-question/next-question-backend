@@ -105,7 +105,7 @@ public class SolvingService {
             QuestionInfo questionInfo = question.getQuestionInfo();
 
             QuestionSolveStats stats = followService.getStatsForQuestion30Days(
-                    question.getId(), question.getMember().getId());
+                    question.getMember().getId(), question.getId());
 
             FindQuestionsByNormalExamResponse res = new FindQuestionsByNormalExamResponse();
             res.setEncryptedQuestionId(encryptionService.encryptPrimaryKey(question.getId()));
