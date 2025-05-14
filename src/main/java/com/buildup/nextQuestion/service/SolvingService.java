@@ -2,7 +2,6 @@ package com.buildup.nextQuestion.service;
 
 import com.buildup.nextQuestion.domain.*;
 import com.buildup.nextQuestion.domain.enums.QuestionType;
-import com.buildup.nextQuestion.dto.follow.QuestionSolveStats;
 import com.buildup.nextQuestion.dto.question.NormalExamOption;
 import com.buildup.nextQuestion.dto.question.NormalQuestionInfo;
 import com.buildup.nextQuestion.dto.solving.FindQuestionsByNormalExamResponse;
@@ -37,11 +36,12 @@ public class SolvingService {
     private final WorkBookInfoRepository workBookInfoRepository;
     private final QuestionRepository questionRepository;
     private final AttendanceRepository attendanceRepository;
-    private final FollowService followService;
+
 
     @Transactional
     public List<FindQuestionsByNormalExamResponse> findQuestionsByNormalExam(String token, FindQuestionsByNormalExamRequest request) throws Exception {
         String userId = jwtUtility.getUserIdFromToken(token);
+
         Member member = memberFinder.findMember(userId);
 
         // 전체 문제 리스트 생성
@@ -116,11 +116,6 @@ public class SolvingService {
             res.setOpt(questionInfo.getOption());
             res.setWrong(question.getWrong());
             res.setRecentSolveTime(question.getRecentSolveTime());
-
-            res.setTotalAttempts(stats.getTotalAttempts());
-            res.setCorrectCount(stats.getCorrectCount());
-            res.setWrongCount(stats.getWrongCount());
-
             return res;
 
         } catch (Exception e) {

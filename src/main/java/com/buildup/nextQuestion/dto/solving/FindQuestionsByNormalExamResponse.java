@@ -19,7 +19,5 @@ public class FindQuestionsByNormalExamResponse {
     private String opt;
     private Boolean wrong;
     private Timestamp recentSolveTime;
-    private Integer totalAttempts;
-    private Integer correctCount;
-    private Integer wrongCount;
+
 }
