@@ -7,6 +7,7 @@ import com.buildup.nextQuestion.domain.Question;
 import com.buildup.nextQuestion.dto.statistics.DayQuestionStats;
 import com.buildup.nextQuestion.repository.HistoryInfoRepository;
 import com.buildup.nextQuestion.repository.HistoryRepository;
+import com.buildup.nextQuestion.repository.QuestionRepository;
 import com.buildup.nextQuestion.support.MemberFinder;
 import com.buildup.nextQuestion.utility.JwtUtility;
 import lombok.RequiredArgsConstructor;
@@ -15,8 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor

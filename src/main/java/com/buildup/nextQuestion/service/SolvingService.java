@@ -104,9 +104,6 @@ public class SolvingService {
             String encryptedWorkbookId = normalQuestionInfo.getEncryptedWorkbookId();
             QuestionInfo questionInfo = question.getQuestionInfo();
 
-            QuestionSolveStats stats = followService.getStatsForQuestion30Days(
-                    question.getMember().getId(), question.getId());
-
             FindQuestionsByNormalExamResponse res = new FindQuestionsByNormalExamResponse();
             res.setEncryptedQuestionId(encryptionService.encryptPrimaryKey(question.getId()));
             res.setEncryptedWorkbookId(encryptedWorkbookId);
