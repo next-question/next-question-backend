@@ -54,8 +54,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(
-                "http://localhost:3000", // 로컬 프론트엔드
-                "https://e677-1-227-117-250.ngrok-free.app" // 배포용 ngrok 주소
+                "http://localhost:3000" // 로컬 프론트엔드
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH"));
         configuration.setAllowedHeaders(List.of("*"));
