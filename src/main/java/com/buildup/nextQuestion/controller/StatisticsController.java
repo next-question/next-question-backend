@@ -26,6 +26,14 @@ public class StatisticsController {
         return ResponseEntity.ok(stats);
     }
 
+    @GetMapping("main/test-data")
+    public ResponseEntity<?> getTestStatsByDay(
+            @RequestHeader("Authorization") String token
+    ) {
+        statisticsService.generateTestHistoryData(token);
+        return ResponseEntity.ok("테스트 데이터 생성 완료");
+    }
+
     // 1. 푼 문제 목록 조회
     @GetMapping("/solved")
     public ResponseEntity<List<MemberQuestionInfoResponse>> getSolvedQuestions(

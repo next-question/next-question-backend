@@ -19,10 +19,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Period;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -84,6 +81,38 @@ public class StatisticsService {
         }
 
         return new ArrayList<>(statsMap.values());
+    }
+
+    @Transactional
+    public void generateTestHistoryData(String token) {
+        String userId = jwtUtility.getUserIdFromToken(token);
+        Member member = memberFinder.findMember(userId);
+
+        Random random = new Random();
+        LocalDate today = LocalDate.now();
+
+        for (int i = 1; i <= 6; i++) {
+            LocalDate date = today.minusDays(i);
+            int totalQuestions = random.nextInt(30) + 1; // 1~30개 랜덤 문제 수
+
+            // History 생성
+            History history = new History();
+            history.setMember(member);
+            history.setSolvedDate(Timestamp.valueOf(date.atStartOfDay())); // 해당 날짜 00시
+            historyRepository.save(history);
+
+            // 각 문제에 대해 HistoryInfo 생성
+            for (int j = 0; j < totalQuestions; j++) {
+                HistoryInfo info = new HistoryInfo();
+                info.setHistory(history);
+
+                // 70% 확률로 맞춘 것으로 설정
+                boolean isCorrect = random.nextDouble() < 0.7;
+                info.setWrong(!isCorrect);
+
+                historyInfoRepository.save(info);
+            }
+        }
     }
 
 
