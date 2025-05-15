@@ -15,11 +15,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Period;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -39,37 +42,51 @@ public class StatisticsService {
 
         List<History> histories = historyRepository.findAllByMemberId(member.getId());
 
-        List<String> weekDays = List.of("월", "화", "수", "목", "금", "토", "일");
-        List<DayQuestionStats> statsList = new ArrayList<>();
+        // 요일 한글 매핑
+        Map<DayOfWeek, String> dayOfWeekKorean = Map.of(
+                DayOfWeek.MONDAY, "월",
+                DayOfWeek.TUESDAY, "화",
+                DayOfWeek.WEDNESDAY, "수",
+                DayOfWeek.THURSDAY, "목",
+                DayOfWeek.FRIDAY, "금",
+                DayOfWeek.SATURDAY, "토",
+                DayOfWeek.SUNDAY, "일"
+        );
 
-        for (String day : weekDays) {
+        // 최근 7일 날짜
+        LocalDate today = LocalDate.now();
+        Map<LocalDate, DayQuestionStats> statsMap = new LinkedHashMap<>();
+        for (int i = 6; i >= 0; i--) {
+            LocalDate date = today.minusDays(i);
+            String koreanDay = dayOfWeekKorean.get(date.getDayOfWeek());
+
             DayQuestionStats stats = new DayQuestionStats();
-            stats.setDay(day);
-            statsList.add(stats);
+            stats.setDay(koreanDay);
+            statsMap.put(date, stats);
         }
 
         for (History history : histories) {
             if (history.getSolvedDate() == null) continue;
 
             LocalDate solveDate = history.getSolvedDate().toLocalDateTime().toLocalDate();
-            int dayValue = solveDate.getDayOfWeek().getValue(); // 월=1, 일=7
 
-            DayQuestionStats stats = statsList.get(dayValue - 1);
+            if (statsMap.containsKey(solveDate)) {
+                DayQuestionStats stats = statsMap.get(solveDate);
+                List<HistoryInfo> historyInfos = historyInfoRepository.findAllByHistoryId(history.getId());
 
-            List<HistoryInfo> historyInfos = historyInfoRepository.findAllByHistoryId(history.getId());
-
-            for (HistoryInfo historyInfo : historyInfos) {
-                stats.setTotal(stats.getTotal() + 1);
-
-                // 틀렸는지 여부 확인 (wrong = true → 틀림 / false → 맞음)
-                if (Boolean.FALSE.equals(historyInfo.getWrong())) {
-                    stats.setCorrect(stats.getCorrect() + 1);
+                for (HistoryInfo historyInfo : historyInfos) {
+                    stats.setTotal(stats.getTotal() + 1);
+                    if (Boolean.FALSE.equals(historyInfo.getWrong())) {
+                        stats.setCorrect(stats.getCorrect() + 1);
+                    }
                 }
             }
         }
 
-        return statsList;
+        return new ArrayList<>(statsMap.values());
     }
+
+
 
     // 특정 멤버의 몇 일 이내의 푼 문제 HistoryInfo 리스트 반환 (중복 O)
     private List<HistoryInfo> getSolvedHistoryInfosBetween(Long memberId, LocalDateTime from, LocalDateTime to) {
