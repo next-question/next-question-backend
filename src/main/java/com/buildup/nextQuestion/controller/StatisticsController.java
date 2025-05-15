@@ -26,7 +26,7 @@ public class StatisticsController {
         return ResponseEntity.ok(stats);
     }
 
-    @GetMapping("main/test-data")
+    @PostMapping("main/test-data")
     public ResponseEntity<?> getTestStatsByDay(
             @RequestHeader("Authorization") String token
     ) {
