@@ -450,39 +450,7 @@ public class SolvingService {
     }
 
 
-    @Transactional
-    public void recordAttendance(String token, List<RecordAttendanceRequest> requests) throws Exception {
-        LocalDate today = LocalDate.now();
 
-        String userId = jwtUtility.getUserIdFromToken(token);
-
-        // 사용자 조회
-        Member member = memberFinder.findMember(userId);
-
-        // 이미 출석 기록이 있는지 확인
-        boolean alreadyChecked = attendanceRepository.existsByMemberAndDate(member, today);
-        if (alreadyChecked){
-            throw new IllegalArgumentException("이미 출석처리 되었습니다.");
-        }
-
-        if (requests.size() != 3){
-            throw new IllegalArgumentException("출석 인증이 처리되지 않았습니다.");
-        }
-        // 문제 풀이 처리
-        for (RecordAttendanceRequest request : requests) {
-            Long questionId = encryptionService.decryptPrimaryKey(request.getEncryptedQuestionId());
-            Question question = questionRepository.findById(questionId).get();
-            question.setWrong(request.isWrong());
-            question.setRecentSolveTime(new Timestamp(System.currentTimeMillis()));
-        }
-
-        // 출석 기록 저장
-        Attendance attendance = new Attendance();
-        attendance.setMember(member);
-        attendance.setDate(today);
-        attendance.setCheckedTime(new Timestamp(System.currentTimeMillis()));
-        attendanceRepository.save(attendance);
-    }
     @Transactional(readOnly = true)
     public FindQuestionsByTypeResponse findQuestionsByType(String token, List<String> encryptedWorkBookIds) throws Exception {
         String userId = jwtUtility.getUserIdFromToken(token);

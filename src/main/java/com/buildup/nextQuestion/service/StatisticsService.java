@@ -1,16 +1,13 @@
 package com.buildup.nextQuestion.service;
 
-import com.buildup.nextQuestion.domain.History;
-import com.buildup.nextQuestion.domain.HistoryInfo;
-import com.buildup.nextQuestion.domain.Member;
-import com.buildup.nextQuestion.domain.Question;
+import com.buildup.nextQuestion.domain.*;
 import com.buildup.nextQuestion.domain.enums.SolvedType;
-import com.buildup.nextQuestion.dto.question.MemberQuestionInfoDto;
-import com.buildup.nextQuestion.dto.statistics.DayQuestionStats;
-import com.buildup.nextQuestion.dto.statistics.QuestionStatisticsRequest;
+import com.buildup.nextQuestion.dto.question.MemberQuestionInfoResponse;
+import com.buildup.nextQuestion.dto.statistics.*;
 import com.buildup.nextQuestion.mapper.QuestionMapper;
 import com.buildup.nextQuestion.repository.HistoryInfoRepository;
 import com.buildup.nextQuestion.repository.HistoryRepository;
+import com.buildup.nextQuestion.repository.StatisticsRepository;
 import com.buildup.nextQuestion.support.MemberFinder;
 import com.buildup.nextQuestion.utility.JwtUtility;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Period;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -33,6 +31,7 @@ public class StatisticsService {
     private final HistoryInfoRepository historyInfoRepository;
     private final HistoryRepository historyRepository;
     private final QuestionMapper questionMapper;
+    private final StatisticsRepository statisticsRepository;
 
     public List<DayQuestionStats> findCorrectQuestions(String token) {
         String userId = jwtUtility.getUserIdFromToken(token);
@@ -73,17 +72,24 @@ public class StatisticsService {
     }
 
     // 특정 멤버의 몇 일 이내의 푼 문제 HistoryInfo 리스트 반환 (중복 O)
-    private List<HistoryInfo> getSolvedHistoryInfos(Long memberId, int days) {
-        LocalDateTime fromDate = LocalDateTime.now().minusDays(days);
-        Timestamp timestamp = Timestamp.valueOf(fromDate);
+    private List<HistoryInfo> getSolvedHistoryInfosBetween(Long memberId, LocalDateTime from, LocalDateTime to) {
+        Timestamp fromTimestamp = Timestamp.valueOf(from);
+        Timestamp toTimestamp = Timestamp.valueOf(to);
 
-        List<History> recentHistories = historyRepository.findByMemberIdAndSolvedDateAfterAndTypeIn(
-                memberId,
-                timestamp,
-                List.of(SolvedType.NORMAL, SolvedType.MOCK)
+        List<SolvedType> types = List.of(
+                SolvedType.NORMAL,
+                SolvedType.MOCK,
+                SolvedType.WRONG
         );
 
-        List<Long> historyIds = recentHistories.stream()
+        List<History> histories = historyRepository.findByMemberIdAndSolvedDateBetweenAndTypeIn(
+                memberId,
+                fromTimestamp,
+                toTimestamp,
+                types
+        );
+
+        List<Long> historyIds = histories.stream()
                 .map(History::getId)
                 .toList();
 
@@ -93,12 +99,15 @@ public class StatisticsService {
     }
 
     // 몇일 이내에 푼 문제 (중복X)
-    public List<MemberQuestionInfoDto> getSolvedQuestion(String token, QuestionStatisticsRequest request) {
+    public List<MemberQuestionInfoResponse> getSolvedQuestion(String token, QuestionStatisticsRequest request) {
         String userId = jwtUtility.getUserIdFromToken(token);
         Member member = memberFinder.findMember(userId);
         Long memberId = member.getId();
 
-        List<HistoryInfo> historyInfos = getSolvedHistoryInfos(memberId, request.getDays());
+        LocalDateTime from = LocalDate.now().minusDays(request.getDays()).atStartOfDay();
+        LocalDateTime to = LocalDateTime.now();
+
+        List<HistoryInfo> historyInfos = getSolvedHistoryInfosBetween(memberId, from, to);
 
         List<Question> questions = historyInfos.stream()
                 .map(HistoryInfo::getQuestion)
@@ -107,13 +116,17 @@ public class StatisticsService {
 
         return questionMapper.memberQuestionInfoMapper(questions);
     }
+
     // 몇일 이내에 틀린 문제 (중복X)
-    public List<MemberQuestionInfoDto> getWrongQuestion(String token, QuestionStatisticsRequest request) {
+    public List<MemberQuestionInfoResponse> getWrongQuestion(String token, QuestionStatisticsRequest request) {
         String userId = jwtUtility.getUserIdFromToken(token);
         Member member = memberFinder.findMember(userId);
         Long memberId = member.getId();
 
-        List<HistoryInfo> historyInfos = getSolvedHistoryInfos(memberId, request.getDays());
+        LocalDateTime from = LocalDate.now().minusDays(request.getDays()).atStartOfDay();
+        LocalDateTime to = LocalDateTime.now();
+
+        List<HistoryInfo> historyInfos = getSolvedHistoryInfosBetween(memberId, from, to);
 
         List<Question> questions = historyInfos.stream()
                 .filter(info -> Boolean.TRUE.equals(info.getWrong()))
@@ -125,14 +138,17 @@ public class StatisticsService {
     }
 
     // 몇일 이내에 n회 이상 틀린 문제 (중복X)
-    public List<MemberQuestionInfoDto> getFrequentlyWrongQuestion(String token, QuestionStatisticsRequest request) {
+    public List<MemberQuestionInfoResponse> getFrequentlyWrongQuestion(String token, QuestionStatisticsRequest request) {
         String userId = jwtUtility.getUserIdFromToken(token);
         Member member = memberFinder.findMember(userId);
         Long memberId = member.getId();
 
         int threshold = request.getThreshold() != null ? request.getThreshold() : 3;
 
-        List<HistoryInfo> historyInfos = getSolvedHistoryInfos(memberId, request.getDays());
+        LocalDateTime from = LocalDate.now().minusDays(request.getDays()).atStartOfDay();
+        LocalDateTime to = LocalDateTime.now();
+
+        List<HistoryInfo> historyInfos = getSolvedHistoryInfosBetween(memberId, from, to);
 
         List<Question> questions = historyInfos.stream()
                 .filter(info -> Boolean.TRUE.equals(info.getWrong()))
@@ -147,6 +163,102 @@ public class StatisticsService {
 
         return questionMapper.memberQuestionInfoMapper(questions);
     }
+
+    public ProfileStatisticResponse getProfileStatistics(String token) {
+        return new ProfileStatisticResponse(
+                getTodaySolvedCount(token).getSolvedNum(),
+                getThisMonthSolvedCount(token).getSolvedNum(),
+                getMonthlyAverageSolvedCount(token).getAverageSolvedNum(),
+                getStreak(token).getStreak(),
+                getMaxStreak(token).getStreak()
+        );
+    }
+
+    public SolvedNumDto getTodaySolvedCount(String token) {
+        String userId = jwtUtility.getUserIdFromToken(token);
+        Member member = memberFinder.findMember(userId);
+        Long memberId = member.getId();
+
+        LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
+        LocalDateTime now = LocalDateTime.now();
+
+        List<HistoryInfo> todayHistoryInfos = getSolvedHistoryInfosBetween(memberId, startOfToday, now);
+
+        return new SolvedNumDto(todayHistoryInfos.size());
+    }
+
+    public SolvedNumDto getThisMonthSolvedCount(String token) {
+        String userId = jwtUtility.getUserIdFromToken(token);
+        Member member = memberFinder.findMember(userId);
+        Long memberId = member.getId();
+
+        LocalDateTime startOfMonth = LocalDate.now().withDayOfMonth(1).atStartOfDay();
+        LocalDateTime now = LocalDateTime.now();
+
+        List<HistoryInfo> monthHistoryInfos = getSolvedHistoryInfosBetween(memberId, startOfMonth, now);
+
+        return new SolvedNumDto(monthHistoryInfos.size());
+    }
+
+    public AverageSolvedNumDto getMonthlyAverageSolvedCount(String token) {
+        String userId = jwtUtility.getUserIdFromToken(token);
+        Member member = memberFinder.findMember(userId);
+        Long memberId = member.getId();
+
+        // 이번 달의 시작부터 현재까지 범위
+        LocalDateTime startOfMonth = LocalDate.now().withDayOfMonth(1).atStartOfDay();
+        LocalDateTime now = LocalDateTime.now();
+
+        List<HistoryInfo> historyInfos = getSolvedHistoryInfosBetween(memberId, startOfMonth, now);
+
+        int totalSolved = historyInfos.size();
+        int daysPassed = Period.between(startOfMonth.toLocalDate(), now.toLocalDate()).getDays() + 1;
+
+        double rawAverage = daysPassed > 0 ? (double) totalSolved / daysPassed : 0.0;
+
+        // 소수점 1자리 반올림
+        double roundedAverage = Math.round(rawAverage * 10.0) / 10.0;
+
+        return new AverageSolvedNumDto(roundedAverage);
+    }
+
+    public StreakDto getStreak(String token) {
+        String userId = jwtUtility.getUserIdFromToken(token);
+        Member member = memberFinder.findMember(userId);
+
+        Statistics stats = statisticsRepository.findByMember(member)
+                .orElseThrow(() -> new IllegalStateException("통계 정보가 없습니다."));
+
+        return new StreakDto(stats.getStreak());
+    }
+
+    public StreakDto getMaxStreak(String token) {
+        String userId = jwtUtility.getUserIdFromToken(token);
+        Member member = memberFinder.findMember(userId);
+
+        Statistics stats = statisticsRepository.findByMember(member)
+                .orElseThrow(() -> new IllegalStateException("통계 정보가 없습니다."));
+
+        return new StreakDto(stats.getMaxStreak());
+    }
+
+    public void initStatistics(Member member) {
+        if (member == null) {
+            throw new IllegalArgumentException("회원가입 통계 초기화에 실패했습니다: member가 없습니다.");
+        }
+
+        Statistics stats = new Statistics();
+        stats.setMember(member);
+        stats.setStreak(0);
+        stats.setMaxStreak(0);
+        statisticsRepository.save(stats);
+    }
+
+
+
+
+
+
 
 
 

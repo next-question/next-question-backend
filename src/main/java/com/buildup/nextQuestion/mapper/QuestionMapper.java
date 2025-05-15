@@ -2,7 +2,7 @@ package com.buildup.nextQuestion.mapper;
 
 import com.buildup.nextQuestion.domain.Question;
 import com.buildup.nextQuestion.domain.QuestionInfo;
-import com.buildup.nextQuestion.dto.question.MemberQuestionInfoDto;
+import com.buildup.nextQuestion.dto.question.MemberQuestionInfoResponse;
 import com.buildup.nextQuestion.service.EncryptionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -15,7 +15,7 @@ public class QuestionMapper {
 
     private final EncryptionService encryptionService;
 
-    public List<MemberQuestionInfoDto> memberQuestionInfoMapper(List<Question> questions) {
+    public List<MemberQuestionInfoResponse> memberQuestionInfoMapper(List<Question> questions) {
         return questions.stream()
                 .map(question -> {
                     QuestionInfo info = question.getQuestionInfo();
@@ -25,7 +25,7 @@ public class QuestionMapper {
                     }
 
                     try {
-                        return new MemberQuestionInfoDto(
+                        return new MemberQuestionInfoResponse(
                                 encryptionService.encryptPrimaryKey(question.getId()),          // encryptedQuestionId
                                 info.getName(),                                                 // name
                                 info.getType(),                                                 // type

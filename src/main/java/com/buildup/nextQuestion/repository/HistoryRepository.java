@@ -14,4 +14,9 @@ public interface HistoryRepository extends JpaRepository<History, Long> {
     List<History> findByMemberOrderBySolvedDateAsc(Member member);
     List<History> findByMemberIdAndSolvedDateAfterAndTypeIn(Long memberId, Timestamp afterDate, List<SolvedType> types);
     List<History> findByMemberIdAndSolvedDateAfter(Long memberId, Timestamp solvedDate);
+    List<History> findByMemberIdAndSolvedDateBetweenAndTypeIn(
+            Long memberId,
+            Timestamp from,
+            Timestamp to,
+            List<SolvedType> types);
 }
