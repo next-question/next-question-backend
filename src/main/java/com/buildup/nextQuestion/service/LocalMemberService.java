@@ -20,6 +20,7 @@ public class LocalMemberService {
     private final LocalMemberRepository localMemberRepository;
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
+    private final StatisticsService statisticsService;
 
     @Transactional
     public LocalMember register(RegistRequest registDTORequest) {
@@ -43,9 +44,13 @@ public class LocalMemberService {
         Member member = new Member(nickname, LoginType.LOCAL);
         memberRepository.save(member);
 
+        // 통계 초기화
+        statisticsService.initStatistics(member);
+
         // 비밀번호 해싱 후 LocalMember 생성
         String hashedPassword = passwordEncoder.encode(password);
         LocalMember localMember = new LocalMember(userId, hashedPassword, email, member);
         return localMemberRepository.save(localMember);
+
     }
 }

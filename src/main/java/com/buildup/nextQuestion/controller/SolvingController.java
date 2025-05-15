@@ -1,6 +1,7 @@
 package com.buildup.nextQuestion.controller;
 
 import com.buildup.nextQuestion.dto.solving.*;
+import com.buildup.nextQuestion.service.AttendanceService;
 import com.buildup.nextQuestion.service.SolvingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -12,7 +13,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SolvingController {
 
-
+    private final AttendanceService attendanceService;
     private final SolvingService solvingService;
 
     @GetMapping("member/solving/daily/search")
@@ -28,7 +29,7 @@ public class SolvingController {
             @RequestHeader("Authorization") String token,
             @RequestBody List<RecordAttendanceRequest> requests
     ) throws Exception {
-        solvingService.recordAttendance(token,requests);
+        attendanceService.recordAttendance(token,requests);
         return ResponseEntity.ok("출석 체크 되었습니다.");
     }
 

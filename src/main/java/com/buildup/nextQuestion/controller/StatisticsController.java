@@ -1,9 +1,9 @@
 package com.buildup.nextQuestion.controller;
 
-import com.buildup.nextQuestion.dto.question.MemberQuestionInfoDto;
+import com.buildup.nextQuestion.dto.question.MemberQuestionInfoResponse;
 import com.buildup.nextQuestion.dto.statistics.DayQuestionStats;
+import com.buildup.nextQuestion.dto.statistics.ProfileStatisticResponse;
 import com.buildup.nextQuestion.dto.statistics.QuestionStatisticsRequest;
-import com.buildup.nextQuestion.service.SolvingService;
 import com.buildup.nextQuestion.service.StatisticsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -28,31 +28,39 @@ public class StatisticsController {
 
     // 1. 푼 문제 목록 조회
     @GetMapping("/solved")
-    public ResponseEntity<List<MemberQuestionInfoDto>> getSolvedQuestions(
+    public ResponseEntity<List<MemberQuestionInfoResponse>> getSolvedQuestions(
             @RequestHeader("Authorization") String token,
             @RequestBody QuestionStatisticsRequest request) {
 
-        List<MemberQuestionInfoDto> result = statisticsService.getSolvedQuestion(token, request);
+        List<MemberQuestionInfoResponse> result = statisticsService.getSolvedQuestion(token, request);
         return ResponseEntity.ok(result);
     }
 
     // 2. 틀린 문제 목록 조회
     @GetMapping("/wrong")
-    public ResponseEntity<List<MemberQuestionInfoDto>> getWrongQuestions(
+    public ResponseEntity<List<MemberQuestionInfoResponse>> getWrongQuestions(
             @RequestHeader("Authorization") String token,
             @RequestBody QuestionStatisticsRequest request) {
 
-        List<MemberQuestionInfoDto> result = statisticsService.getWrongQuestion(token, request);
+        List<MemberQuestionInfoResponse> result = statisticsService.getWrongQuestion(token, request);
         return ResponseEntity.ok(result);
     }
 
     // 3. 자주 틀린 문제 목록 조회
     @GetMapping("/wrong-frequent")
-    public ResponseEntity<List<MemberQuestionInfoDto>> getFrequentlyWrongQuestions(
+    public ResponseEntity<List<MemberQuestionInfoResponse>> getFrequentlyWrongQuestions(
             @RequestHeader("Authorization") String token,
             @RequestBody QuestionStatisticsRequest request) {
 
-        List<MemberQuestionInfoDto> result = statisticsService.getFrequentlyWrongQuestion(token, request);
+        List<MemberQuestionInfoResponse> result = statisticsService.getFrequentlyWrongQuestion(token, request);
         return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/profile")
+    public ResponseEntity<ProfileStatisticResponse> getProfileStatistics(
+            @RequestHeader("Authorization") String token) {
+
+        ProfileStatisticResponse profileStatisticRespones = statisticsService.getProfileStatistics(token);
+        return ResponseEntity.ok(profileStatisticRespones);
     }
 }

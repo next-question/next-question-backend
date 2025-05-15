@@ -33,6 +33,7 @@ public class SocialMemberService {
     private final JwtUtility jwtUtility;
     private final MemberRepository memberRepository;
     private final RefreshTokenService refreshTokenService;
+    private final StatisticsService statisticsService;
 
     @Value("${google.client.id}")
     private String googleClientId;
@@ -92,6 +93,9 @@ public class SocialMemberService {
         // Member 객체 생성
         Member member = new Member(nickname, LoginType.SOCIAL);
         memberRepository.save(member);
+
+        // 통계 초기화
+        statisticsService.initStatistics(member);
 
         SocialMember socialMember = new SocialMember(userId, SocialType.GOOGLE, member);
         socialMemberRepository.save(socialMember);

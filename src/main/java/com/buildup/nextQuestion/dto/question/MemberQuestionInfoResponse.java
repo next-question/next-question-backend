@@ -4,17 +4,13 @@ import com.buildup.nextQuestion.domain.enums.QuestionType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.cglib.core.Local;
 
-import java.sql.Timestamp;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class MemberQuestionInfoDto {
+public class MemberQuestionInfoResponse {
     private String encryptedQuestionId;
     private String name;
     private QuestionType type;
