@@ -22,4 +22,8 @@ public class Statistics {
 
     private int maxStreak;
 
+    private int totalAttempts;
+
+    private int correctCount;
+
 }

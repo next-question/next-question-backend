@@ -3,6 +3,9 @@ package com.buildup.nextQuestion.service;
 import com.buildup.nextQuestion.domain.*;
 import com.buildup.nextQuestion.domain.enums.SolvedType;
 import com.buildup.nextQuestion.dto.question.MemberQuestionInfoResponse;
+import com.buildup.nextQuestion.dto.solving.ExamInfoDTO;
+import com.buildup.nextQuestion.dto.solving.SaveHistoryByExamRequest;
+import com.buildup.nextQuestion.dto.solving.WorkBookInfoDTO;
 import com.buildup.nextQuestion.dto.statistics.*;
 import com.buildup.nextQuestion.mapper.QuestionMapper;
 import com.buildup.nextQuestion.repository.HistoryInfoRepository;
@@ -10,15 +13,13 @@ import com.buildup.nextQuestion.repository.HistoryRepository;
 import com.buildup.nextQuestion.repository.StatisticsRepository;
 import com.buildup.nextQuestion.support.MemberFinder;
 import com.buildup.nextQuestion.utility.JwtUtility;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.Period;
+import java.time.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -211,13 +212,38 @@ public class StatisticsService {
     }
 
     public ProfileStatisticResponse getProfileStatistics(String token) {
+                String userId = jwtUtility.getUserIdFromToken(token);
+                Member member = memberFinder.findMember(userId);
         return new ProfileStatisticResponse(
+                member.getNickname(),
+                userId,
+                getAverageCorrectRate(token).getAverageCorrectRate(),
                 getTodaySolvedCount(token).getSolvedNum(),
                 getThisMonthSolvedCount(token).getSolvedNum(),
                 getMonthlyAverageSolvedCount(token).getAverageSolvedNum(),
                 getStreak(token).getStreak(),
-                getMaxStreak(token).getStreak()
+                getMaxStreak(token).getStreak(),
+                getDailySolveCountThisMonth(token)
         );
+    }
+
+    public AverageCorrectRateDto getAverageCorrectRate(String token) {
+        String userId = jwtUtility.getUserIdFromToken(token);
+        Member member = memberFinder.findMember(userId);
+
+        Statistics stats = statisticsRepository.findByMember(member)
+            .orElseThrow(() -> new IllegalStateException("통계 정보가 없습니다."));
+
+        int total = stats.getTotalAttempts();
+        int correct = stats.getCorrectCount();
+
+        int roundedCorrectRate = 0;
+        if (total > 0) {
+            double averageCorrectRate = ((double) correct / total) * 100;
+            roundedCorrectRate = (int) Math.round(averageCorrectRate);
+        }
+
+        return new AverageCorrectRateDto(roundedCorrectRate);
     }
 
     public SolvedNumDto getTodaySolvedCount(String token) {
@@ -288,6 +314,35 @@ public class StatisticsService {
         return new StreakDto(stats.getMaxStreak());
     }
 
+    public List<DailySolveCountDto> getDailySolveCountThisMonth(String token) {
+        String userId = jwtUtility.getUserIdFromToken(token);
+        Member member = memberFinder.findMember(userId);
+        Long memberId = member.getId();
+
+        LocalDate now = LocalDate.now();
+        LocalDate firstDay = now.withDayOfMonth(1);
+        LocalDate lastDay = now.withDayOfMonth(now.lengthOfMonth());
+
+        LocalDateTime from = firstDay.atStartOfDay();
+        LocalDateTime to = lastDay.atTime(LocalTime.MAX);
+
+        List<HistoryInfo> historyInfos = getSolvedHistoryInfosBetween(memberId, from, to);
+
+        Map<LocalDate, Long> countsPerDay = historyInfos.stream()
+                .collect(Collectors.groupingBy(
+                        info -> info.getHistory().getSolvedDate().toLocalDateTime().toLocalDate(),
+                        Collectors.counting()
+                ));
+
+        List<DailySolveCountDto> result = new ArrayList<>();
+        for (LocalDate date = firstDay; !date.isAfter(lastDay); date = date.plusDays(1)) {
+            int count = countsPerDay.getOrDefault(date, 0L).intValue();
+            result.add(new DailySolveCountDto(date, count));
+        }
+
+        return result;
+    }
+
     public void initStatistics(Member member) {
         if (member == null) {
             throw new IllegalArgumentException("회원가입 통계 초기화에 실패했습니다: member가 없습니다.");
@@ -297,6 +352,32 @@ public class StatisticsService {
         stats.setMember(member);
         stats.setStreak(0);
         stats.setMaxStreak(0);
+        stats.setTotalAttempts(0);
+        stats.setCorrectCount(0);
+        statisticsRepository.save(stats);
+    }
+
+    @Transactional
+    public void updateTotalAtmAndCorrectCnt(String token, SaveHistoryByExamRequest request) {
+        String userId = jwtUtility.getUserIdFromToken(token);
+        Member member = memberFinder.findMember(userId);
+
+        int totalAttempts = 0;
+        int correctCount = 0;
+
+        for (WorkBookInfoDTO workBookInfoDTO : request.getWorkBookInfoDTOS()) {
+            for (ExamInfoDTO info : workBookInfoDTO.getInfo()) {
+                totalAttempts++;
+                if (!info.getWrong()) correctCount++;
+            }
+        }
+
+        Statistics stats = statisticsRepository.findByMember(member)
+                .orElseThrow(() -> new EntityNotFoundException("통계가 존재하지 않습니다."));
+
+        stats.setTotalAttempts(stats.getTotalAttempts() + totalAttempts);
+        stats.setCorrectCount(stats.getCorrectCount() + correctCount);
+
         statisticsRepository.save(stats);
     }
 
