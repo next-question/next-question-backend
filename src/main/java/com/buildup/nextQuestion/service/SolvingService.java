@@ -38,6 +38,7 @@ public class SolvingService {
     private final QuestionRepository questionRepository;
     private final AttendanceRepository attendanceRepository;
     private final FollowService followService;
+    private final StatisticsService statisticsService;
 
     @Transactional
     public List<FindQuestionsByNormalExamResponse> findQuestionsByNormalExam(String token, FindQuestionsByNormalExamRequest request) throws Exception {
@@ -312,6 +313,8 @@ public class SolvingService {
                 historyInfoRepository.save(historyInfo);
             }
         }
+
+        statisticsService.updateTotalAtmAndCorrectCnt(token, request);
     }
 
 
