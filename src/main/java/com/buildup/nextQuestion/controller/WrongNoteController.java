@@ -25,13 +25,4 @@ public class WrongNoteController {
         FindWrongNoteResponse response = wrongNoteService.findWrongNote(token, request);
         return ResponseEntity.ok(response);
     }
-
-    @PostMapping("/solving/wrong/search/questions")
-    public ResponseEntity<?> searchQuestionsByWrongNote(
-            @RequestHeader("Authorization") String token,
-            @RequestBody FindQuestionsByWrongNoteRequest request
-    ) throws Exception {
-        FindQuestionsByWrongNoteResponse response = wrongNoteService.findQuestionsByWrongNote(token, request);
-        return ResponseEntity.ok(response);
-    }
 }

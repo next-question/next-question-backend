@@ -12,7 +12,6 @@ import java.time.LocalDate;
 public class FindWrongNoteRequest {
     private LocalDate startDate;
     private LocalDate endDate;
-    private String workBookName;
     private String periodType;
 
 }

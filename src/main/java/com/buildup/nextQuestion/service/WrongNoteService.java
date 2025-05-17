@@ -122,41 +122,4 @@ public class WrongNoteService {
 
         return response;
     }
-
-    @Transactional
-    public FindQuestionsByWrongNoteResponse findQuestionsByWrongNote(String token, FindQuestionsByWrongNoteRequest request) throws Exception {
-        String userId = jwtUtility.getUserIdFromToken(token);
-        Member member = memberFinder.findMember(userId);
-
-        FindQuestionsByWrongNoteResponse response = new FindQuestionsByWrongNoteResponse();
-        Long historyId = request.getHistoryId();  // 받아온 historyId 리스트
-
-        // 틀린 문제만 필터링하여 찾기
-        List<HistoryInfo> wrongHistoryInfos = historyInfoRepository.findByWrongIsTrueAndHistoryId(historyId);
-        if (wrongHistoryInfos.isEmpty()) {
-            throw new EntityNotFoundException("해당 기간 오답 문제를 찾는 도중 오류가 발생했습니다.");
-        }
-
-        List<WrongNoteQuestionDTO> result = new ArrayList<>();
-        for (HistoryInfo historyInfo : wrongHistoryInfos) {
-            Question question = historyInfo.getQuestion();
-            QuestionInfo questionInfo = question.getQuestionInfo();
-
-            // 문제 DTO 생성
-            WrongNoteQuestionDTO questionDTO = new WrongNoteQuestionDTO();
-            questionDTO.setEncryptedQuestionId(encryptionService.encryptPrimaryKey(questionInfo.getId()));
-            questionDTO.setName(questionInfo.getName());
-            questionDTO.setType(questionInfo.getType());
-            questionDTO.setAnswer(questionInfo.getAnswer());
-            questionDTO.setOpt(questionInfo.getOption());
-            questionDTO.setRecentSolvedDate(question.getRecentSolveTime());
-
-            result.add(questionDTO);
-        }
-
-        response.setQuestions(result);
-
-        return response;
-    }
-
 }
