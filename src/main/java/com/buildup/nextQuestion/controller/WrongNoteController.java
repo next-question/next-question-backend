@@ -1,7 +1,5 @@
 package com.buildup.nextQuestion.controller;
 
-import com.buildup.nextQuestion.dto.wrongNote.FindQuestionsByWrongNoteRequest;
-import com.buildup.nextQuestion.dto.wrongNote.FindQuestionsByWrongNoteResponse;
 import com.buildup.nextQuestion.dto.wrongNote.FindWrongNoteRequest;
 import com.buildup.nextQuestion.dto.wrongNote.FindWrongNoteResponse;
 import com.buildup.nextQuestion.service.WrongNoteService;
