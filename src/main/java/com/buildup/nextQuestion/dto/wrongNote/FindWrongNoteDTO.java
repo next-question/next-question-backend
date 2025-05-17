@@ -10,12 +10,15 @@ import java.sql.Timestamp;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class WrongNoteQuestionDTO {
+public class FindWrongNoteDTO {
     private String encryptedQuestionId;
+    private String encryptedWorkBookId;
+    private String workBookName;
     private String name;
     private QuestionType type;
     private String answer;
     private String opt;
     private Timestamp solvedDate;
-    private Timestamp recentSolvedDate;
+    private Timestamp recentSolveTime;
 }
+

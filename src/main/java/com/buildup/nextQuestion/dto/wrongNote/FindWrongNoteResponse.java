@@ -13,5 +13,5 @@ import java.util.List;
 public class FindWrongNoteResponse {
     private LocalDate startDate;
     private LocalDate endDate;
-    private List<GroupedWorkBookDTO> groupedWorkBooks;
+    private List<FindWrongNoteDTO> questions;
 }
