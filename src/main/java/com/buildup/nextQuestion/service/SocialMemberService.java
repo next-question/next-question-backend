@@ -76,7 +76,7 @@ public class SocialMemberService {
         Member member = socialMember.getMember();
         String accessToken = jwtUtility.generateToken(snsId, member.getRole());
         String refreshToken = keepLogin ? refreshTokenService.createRefreshToken(member) : null;
-        LoginResponse loginDTOresponse = new LoginResponse(refreshToken, accessToken, member.getNickname(), member.getRole());
+        LoginResponse loginDTOresponse = new LoginResponse(snsId, refreshToken, accessToken, member.getNickname(), member.getRole());
         // 3. JWT 토큰 생성 후 반환
         return loginDTOresponse;
     }
