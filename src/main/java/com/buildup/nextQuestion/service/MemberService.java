@@ -49,7 +49,7 @@ public class MemberService {
             String accessToken = jwtUtility.generateToken(userId, member.getRole());
             String refreshToken = keepLogin ? refreshTokenService.createRefreshToken(member) : null;
 
-            return new LoginResponse(refreshToken, accessToken, member.getNickname(), member.getRole());
+            return new LoginResponse(userId, refreshToken, accessToken, member.getNickname(), member.getRole());
         } else {
             throw new IllegalArgumentException("아이디 또는 비밀번호가 올바르지 않습니다.");
         }
