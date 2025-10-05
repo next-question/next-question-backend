@@ -41,9 +41,12 @@ public class SocialMemberService {
     @Value("${google.client.pw}")
     private String googleClientPw;
 
+    @Value("${google.redirect.uri}")
+    private String googleRedirectUri;
+
     public String loginUrlGoogle(){
         String reqUrl = "https://accounts.google.com/o/oauth2/v2/auth?client_id=" + googleClientId
-                + "&redirect_uri=http://localhost:3000/google/callback&response_type=code&scope=email%20profile%20openid&access_type=offline&prompt=consent";
+                + "&redirect_uri=" + googleRedirectUri + "&response_type=code&scope=email%20profile%20openid&access_type=offline&prompt=consent";
         return reqUrl;
     }
 
@@ -54,20 +57,22 @@ public class SocialMemberService {
                 .clientId(googleClientId)
                 .clientSecret(googleClientPw)
                 .code(authCode)
-                .redirectUri("http://localhost:3000/google/callback")
+                .redirectUri(googleRedirectUri)
                 .grantType("authorization_code").build();
         //해당 코드를 이용해 인증을 받아옴
         ResponseEntity<GoogleResponse> resultEntity = restTemplate.postForEntity("https://oauth2.googleapis.com/token",
                 googleOAuthRequestParam, GoogleResponse.class);
-        //인증 토큰 활용해 구글에서 사용할 jwtToken 발급
+        //인증 토큰 활용해 구글에서 사용할 jwtToken 발급(신분증 발급)
         String jwtToken = resultEntity.getBody().getId_token();
-        Map<String, String> map = new HashMap<>();
-        map.put("id_token", jwtToken);
-        //jwtToken을 이용해 유저 정보 찾아옴
-        ResponseEntity<GoogleInfResponse> resultEntity2 = restTemplate.postForEntity("https://oauth2.googleapis.com/tokeninfo",
-                map, GoogleInfResponse.class);
-
-        String snsId = resultEntity2.getBody().getEmail();
+        //jwtToken을 이용해 유저 정보 찾아옴(신분증을 서버에서 확인) 비권장(프로덕트용)
+        ResponseEntity<GoogleInfResponse> resultEntity2 = restTemplate.getForEntity("https://oauth2.googleapis.com/tokeninfo?id_token=" + jwtToken,
+                GoogleInfResponse.class);
+        //유저 정보 중 email 추출
+        GoogleInfResponse body = resultEntity2.getBody();
+        if (body == null || body.getEmail() == null) {
+            throw new IllegalStateException("구글 사용자 정보를 가져오지 못했습니다.");
+        }
+        String snsId = body.getEmail();
         return snsId;
     }
 
