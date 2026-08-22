@@ -5,6 +5,8 @@ import com.buildup.nextQuestion.dto.question.UploadFileByGuestRequest;
 import com.buildup.nextQuestion.dto.question.UploadFileByMemberRequest;
 import com.buildup.nextQuestion.dto.question.UploadFileByMemberResponse;
 import com.buildup.nextQuestion.service.question.DocumentChunker;
+import com.buildup.nextQuestion.service.question.GenerationJob;
+import com.buildup.nextQuestion.service.question.QuestionGenerationJobService;
 import com.buildup.nextQuestion.service.question.QuestionTypeCounts;
 import com.buildup.nextQuestion.service.question.QuestionTypeDistributor;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -34,6 +36,7 @@ public class QuestionGenerationFacade {
     private final QuestionService questionService;
     private final QuestionTypeDistributor typeDistributor;
     private final DocumentChunker documentChunker;
+    private final QuestionGenerationJobService jobService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
@@ -70,6 +73,23 @@ public class QuestionGenerationFacade {
                 request.getQuestionCount(), request.getOx(), request.getMultiple(), request.getBlank());
 
         return questionService.saveAll(generate(content, counts));
+    }
+
+    /**
+     * 문제 생성을 백그라운드로 넘기고 작업 id 를 즉시 돌려준다.
+     *
+     * <p>PDF 텍스트 추출과 입력 검증은 <b>요청 스레드에서</b> 끝낸다. 둘 다 빠르고, 잘못된 요청은
+     * 작업을 만들기 전에 바로 알려주는 편이 낫기 때문이다. 오래 걸리는 GPT 호출만 넘긴다.
+     *
+     * <p>업로드한 파일은 요청이 끝나면 사라지므로, 넘기는 것은 파일이 아니라 이미 뽑아낸 텍스트다.
+     */
+    public GenerationJob generateQuestionByMemberAsync(UploadFileByMemberRequest request) throws IOException {
+        String content = fileService.extractTextFromPDF(request.getFile());
+
+        QuestionTypeCounts counts = typeDistributor.distribute(
+                request.getQuestionCount(), request.getOx(), request.getMultiple(), request.getBlank());
+
+        return jobService.submit(() -> questionService.saveAll(generate(content, counts)));
     }
 
     /**
