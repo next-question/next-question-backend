@@ -1,0 +1,44 @@
+# 테스트 전용 설정 — 운영 MySQL 대신 인메모리 H2를 쓴다.
+# 이 파일이 클래스패스에서 src/main/resources/application.yaml 을 가린다.
+spring:
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:nextquestion;MODE=MySQL;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        # 쿼리 수 측정용 — SessionFactory.getStatistics() 를 켠다.
+        generate_statistics: true
+
+# 외부 연동 값은 테스트에서 실제로 쓰지 않는다. 컨텍스트가 뜨도록 자리만 채운다.
+openai:
+  model: test-model
+  api:
+    url: http://localhost/openai-not-called-in-tests
+    key: test-key
+  timeout:
+    connect-ms: 1000
+    read-ms: 2000
+  max-attempts: 3
+  retry-backoff-ms: 1
+  max-input-chars: 40000
+gpt:
+  prompt: "총 %d문항(객관식 %d, 빈칸 %d, OX %d)을 만들어라. 원문: "
+google:
+  client:
+    id: test-client-id
+    pw: test-client-secret
+  redirect:
+    uri: http://localhost/oauth/google
+
+logging.level:
+  org.hibernate.SQL: warn
+  org.hibernate.orm.jdbc.bind: warn
+  org.hibernate.stat: warn

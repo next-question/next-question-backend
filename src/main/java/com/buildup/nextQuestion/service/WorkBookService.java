@@ -8,6 +8,7 @@ import com.buildup.nextQuestion.repository.LocalMemberRepository;
 import com.buildup.nextQuestion.repository.QuestionRepository;
 import com.buildup.nextQuestion.repository.WorkBookRepository;
 import com.buildup.nextQuestion.repository.WorkBookInfoRepository;
+import com.buildup.nextQuestion.repository.projection.WorkBookQuestionCount;
 import com.buildup.nextQuestion.support.MemberFinder;
 import com.buildup.nextQuestion.utility.JwtUtility;
 import jakarta.persistence.EntityNotFoundException;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 
@@ -60,33 +62,47 @@ public class WorkBookService {
 
     }
 
-    @Transactional
+    /**
+     * 문제집 목록. 문제집마다 삭제되지 않은 문제 수를 함께 내려준다.
+     *
+     * <p>문제 수는 문제집별 집계 쿼리 한 번으로 구한다. 예전에는 문제집마다 구성 목록을 조회하고
+     * 그 안에서 문제를 하나씩 조회해 세었는데, 문제집 N개에 문제가 각 M개면 쿼리가
+     * 1 + N + (N × M)개까지 늘어났다.
+     */
+    @Transactional(readOnly = true)
     public List<GetWorkBookResponse> getWorkBook(String token) throws Exception {
         String userId = jwtUtility.getUserIdFromToken(token);
         Member member = memberFinder.findMember(userId);
 
-        List<GetWorkBookResponse> getWorkBookResponses = new ArrayList<>();
-
         List<WorkBook> workBooks = workBookRepository.findAllByMemberId(member.getId());
+        if (workBooks.isEmpty()) {
+            return new ArrayList<>();
+        }
 
+        Map<Long, Long> questionCounts = countActiveQuestions(member.getId(), workBooks);
+
+        List<GetWorkBookResponse> getWorkBookResponses = new ArrayList<>();
         for (WorkBook workBook : workBooks) {
-            int totalQuestion = 0;
-            for (WorkBookInfo workBookInfo : workBookInfoRepository.findAllByWorkBookId(workBook.getId())) {
-                Long questionInfoId = workBookInfo.getQuestionInfo().getId();
-                Question question = questionRepository.findByMemberIdAndQuestionInfoId(member.getId(), questionInfoId).get();
-                if (!question.getDel())
-                    totalQuestion++;
-            }
-
             GetWorkBookResponse getWorkBookResponse = new GetWorkBookResponse();
             getWorkBookResponse.setEncryptedWorkBookId(encryptionService.encryptPrimaryKey(workBook.getId()));
             getWorkBookResponse.setName(workBook.getName());
             getWorkBookResponse.setRecentSolvedDate(workBook.getRecentSolveDate());
-            getWorkBookResponse.setTotalQuestion(totalQuestion);
+            getWorkBookResponse.setTotalQuestion(questionCounts.getOrDefault(workBook.getId(), 0L).intValue());
             getWorkBookResponses.add(getWorkBookResponse);
         }
 
         return getWorkBookResponses;
+    }
+
+    /** 문제집 id → 삭제되지 않은 문제 수. 문제가 없는 문제집은 결과에 없으므로 호출부가 0으로 채운다. */
+    private Map<Long, Long> countActiveQuestions(Long memberId, List<WorkBook> workBooks) {
+        List<Long> workBookIds = workBooks.stream().map(WorkBook::getId).toList();
+
+        return workBookInfoRepository.countActiveQuestionsByWorkBookIds(memberId, workBookIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        WorkBookQuestionCount::getWorkBookId,
+                        WorkBookQuestionCount::getQuestionCount));
     }
 
     public List<GetQuestionsByWorkBookResponse> searchQuestionsByWorkBook(String token, GetQuestionsByWorkBookRequest request) throws Exception {

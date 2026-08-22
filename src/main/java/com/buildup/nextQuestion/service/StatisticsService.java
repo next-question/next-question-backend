@@ -11,6 +11,7 @@ import com.buildup.nextQuestion.mapper.QuestionMapper;
 import com.buildup.nextQuestion.repository.HistoryInfoRepository;
 import com.buildup.nextQuestion.repository.HistoryRepository;
 import com.buildup.nextQuestion.repository.StatisticsRepository;
+import com.buildup.nextQuestion.repository.projection.SolvedAnswerView;
 import com.buildup.nextQuestion.support.MemberFinder;
 import com.buildup.nextQuestion.utility.JwtUtility;
 import jakarta.persistence.EntityNotFoundException;
@@ -34,54 +35,62 @@ public class StatisticsService {
     private final QuestionMapper questionMapper;
     private final StatisticsRepository statisticsRepository;
 
+    /** 요일 한글 표기. */
+    private static final Map<DayOfWeek, String> DAY_OF_WEEK_KOREAN = Map.of(
+            DayOfWeek.MONDAY, "월",
+            DayOfWeek.TUESDAY, "화",
+            DayOfWeek.WEDNESDAY, "수",
+            DayOfWeek.THURSDAY, "목",
+            DayOfWeek.FRIDAY, "금",
+            DayOfWeek.SATURDAY, "토",
+            DayOfWeek.SUNDAY, "일"
+    );
+
+    /**
+     * 최근 7일간 날짜별 "푼 수 / 맞힌 수".
+     *
+     * <p>예전에는 회원의 학습 기록을 전부 가져온 뒤 최근 7일치만 골라내고, 기록마다 그 안의
+     * 문제들을 다시 조회했다. 기록이 쌓일수록 읽는 양과 쿼리 수가 함께 늘었다.
+     * 지금은 기간 조건을 DB로 내려 필요한 두 값만 한 번에 읽고, 날짜별 합산만 메모리에서 한다.
+     */
     public List<DayQuestionStats> findCorrectQuestions(String token) {
         String userId = jwtUtility.getUserIdFromToken(token);
         Member member = memberFinder.findMember(userId);
 
-        List<History> histories = historyRepository.findAllByMemberId(member.getId());
-
-        // 요일 한글 매핑
-        Map<DayOfWeek, String> dayOfWeekKorean = Map.of(
-                DayOfWeek.MONDAY, "월",
-                DayOfWeek.TUESDAY, "화",
-                DayOfWeek.WEDNESDAY, "수",
-                DayOfWeek.THURSDAY, "목",
-                DayOfWeek.FRIDAY, "금",
-                DayOfWeek.SATURDAY, "토",
-                DayOfWeek.SUNDAY, "일"
-        );
-
-        // 최근 7일 날짜
         LocalDate today = LocalDate.now();
-        Map<LocalDate, DayQuestionStats> statsMap = new LinkedHashMap<>();
-        for (int i = 6; i >= 0; i--) {
-            LocalDate date = today.minusDays(i);
-            String koreanDay = dayOfWeekKorean.get(date.getDayOfWeek());
+        LocalDate from = today.minusDays(6);
 
-            DayQuestionStats stats = new DayQuestionStats();
-            stats.setDay(koreanDay);
-            statsMap.put(date, stats);
-        }
+        Map<LocalDate, DayQuestionStats> statsMap = emptyWeek(from, today);
 
-        for (History history : histories) {
-            if (history.getSolvedDate() == null) continue;
+        List<SolvedAnswerView> answers = historyInfoRepository.findSolvedAnswersBetween(
+                member.getId(),
+                Timestamp.valueOf(from.atStartOfDay()),
+                Timestamp.valueOf(today.plusDays(1).atStartOfDay()));
 
-            LocalDate solveDate = history.getSolvedDate().toLocalDateTime().toLocalDate();
+        for (SolvedAnswerView answer : answers) {
+            if (answer.getSolvedDate() == null) continue;
 
-            if (statsMap.containsKey(solveDate)) {
-                DayQuestionStats stats = statsMap.get(solveDate);
-                List<HistoryInfo> historyInfos = historyInfoRepository.findAllByHistoryId(history.getId());
+            DayQuestionStats stats = statsMap.get(answer.getSolvedDate().toLocalDateTime().toLocalDate());
+            if (stats == null) continue;
 
-                for (HistoryInfo historyInfo : historyInfos) {
-                    stats.setTotal(stats.getTotal() + 1);
-                    if (Boolean.FALSE.equals(historyInfo.getWrong())) {
-                        stats.setCorrect(stats.getCorrect() + 1);
-                    }
-                }
+            stats.setTotal(stats.getTotal() + 1);
+            if (Boolean.FALSE.equals(answer.getWrong())) {
+                stats.setCorrect(stats.getCorrect() + 1);
             }
         }
 
         return new ArrayList<>(statsMap.values());
+    }
+
+    /** 활동이 없는 날도 0으로 남도록 7일치 칸을 먼저 만들어 둔다. */
+    private Map<LocalDate, DayQuestionStats> emptyWeek(LocalDate from, LocalDate to) {
+        Map<LocalDate, DayQuestionStats> statsMap = new LinkedHashMap<>();
+        for (LocalDate date = from; !date.isAfter(to); date = date.plusDays(1)) {
+            DayQuestionStats stats = new DayQuestionStats();
+            stats.setDay(DAY_OF_WEEK_KOREAN.get(date.getDayOfWeek()));
+            statsMap.put(date, stats);
+        }
+        return statsMap;
     }
 
     @Transactional
@@ -142,7 +151,8 @@ public class StatisticsService {
 
         if (historyIds.isEmpty()) return List.of();
 
-        return historyInfoRepository.findByHistoryIdIn(historyIds);
+        // 결과를 만들 때 문제와 문제 내용을 반드시 꺼내 쓰므로 조인해서 한 번에 읽는다.
+        return historyInfoRepository.findByHistoryIdInWithQuestion(historyIds);
     }
 
     // 몇일 이내에 푼 문제 (중복X)
@@ -158,6 +168,7 @@ public class StatisticsService {
 
         List<Question> questions = historyInfos.stream()
                 .map(HistoryInfo::getQuestion)
+                .filter(Objects::nonNull)
                 .distinct()
                 .toList();
 
@@ -178,6 +189,7 @@ public class StatisticsService {
         List<Question> questions = historyInfos.stream()
                 .filter(info -> Boolean.TRUE.equals(info.getWrong()))
                 .map(HistoryInfo::getQuestion)
+                .filter(Objects::nonNull)
                 .distinct()
                 .toList();
 
