@@ -26,6 +26,8 @@ dependencies {
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	testRuntimeOnly 'com.h2database:h2'
+	testImplementation 'org.awaitility:awaitility'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.apache.pdfbox:pdfbox:2.0.29'
 	implementation 'io.jsonwebtoken:jjwt-api:0.11.2'
@@ -36,4 +38,10 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
+	// 테스트 출력의 한글이 깨지지 않도록 표준 출력 인코딩을 고정한다.
+	jvmArgs '-Dfile.encoding=UTF-8', '-Dstdout.encoding=UTF-8', '-Dstderr.encoding=UTF-8'
+	testLogging {
+		showStandardStreams = true
+		events 'passed', 'failed', 'skipped'
+	}
 }
