@@ -1,0 +1,55 @@
+# 벤치마크 전용 프로파일. 실제 MySQL 로 응답 시간을 잰다.
+#
+# 인메모리 H2 는 네트워크 라운드트립이 없어서 N+1 의 개선 폭이 실제보다 작게 나온다.
+# 쿼리 수는 어디서 재든 같지만 시간은 다르므로, 포트폴리오에 쓸 시간 수치는 이 프로파일로 뽑는다.
+#
+# 컨테이너 준비:
+#   export BENCH_MYSQL_PASSWORD=아무거나
+#   docker run -d --name nq-bench-mysql \
+#     -e MYSQL_ROOT_PASSWORD="$BENCH_MYSQL_PASSWORD" -e MYSQL_DATABASE=nq_bench \
+#     -p 3309:3306 mysql:8.0
+#
+# 비밀번호는 저장소에 두지 않는다. 벤치 전용 임시 컨테이너라도 마찬가지다.
+#
+# 실행:
+#   ./gradlew test --tests "*N1LatencyBenchmarkTest" -Dspring.profiles.active=mysql
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${BENCH_MYSQL_HOST:localhost}:${BENCH_MYSQL_PORT:3309}/nq_bench?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&rewriteBatchedStatements=true
+    username: ${BENCH_MYSQL_USER:root}
+    password: ${BENCH_MYSQL_PASSWORD}
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        generate_statistics: true
+
+openai:
+  model: test-model
+  api:
+    url: http://localhost/openai-not-called-in-tests
+    key: test-key
+  timeout:
+    connect-ms: 1000
+    read-ms: 2000
+  max-attempts: 3
+  retry-backoff-ms: 1
+  max-input-chars: 40000
+gpt:
+  prompt: "총 %d문항(객관식 %d, 빈칸 %d, OX %d)을 만들어라. 원문: "
+google:
+  client:
+    id: test-client-id
+    pw: test-client-secret
+  redirect:
+    uri: http://localhost/oauth/google
+
+logging.level:
+  org.hibernate.SQL: warn
+  org.hibernate.orm.jdbc.bind: warn
+  org.hibernate.stat: warn
