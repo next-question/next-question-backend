@@ -2,6 +2,7 @@ package com.buildup.nextQuestion.exception;
 
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.dao.DataAccessException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -25,6 +26,15 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({IllegalArgumentException.class, NoSuchElementException.class, EntityNotFoundException.class, IOException.class, SecurityException.class})
     public ResponseEntity<Map<String, Object>> handleIllegalArgumentException(IllegalArgumentException e) {
         return buildErrorResponse(HttpStatus.BAD_REQUEST, "Bad Request Error", e.getMessage());
+    }
+
+    //PDF 추출 자리가 나지 않음 — 서버 오류가 아니라 붐비는 것이므로 재시도 시점을 알려준다
+    @ExceptionHandler(PdfExtractionBusyException.class)
+    public ResponseEntity<Map<String, Object>> handlePdfExtractionBusy(PdfExtractionBusyException e) {
+        ResponseEntity<Map<String, Object>> body = buildErrorResponse(HttpStatus.SERVICE_UNAVAILABLE, "Service Unavailable", e.getMessage());
+        return ResponseEntity.status(body.getStatusCode())
+                .header(HttpHeaders.RETRY_AFTER, "5")
+                .body(body.getBody());
     }
 
     //서버 오류

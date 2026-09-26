@@ -37,3 +37,12 @@ openai:
   max-attempts: 3
   retry-backoff-ms: 1000
   max-input-chars: 40000
+
+# PDF 텍스트 추출
+#   max-concurrent — 동시에 추출하는 문서 수. 0 이면 CPU 코어 수를 쓴다. 추출은 CPU 작업이라
+#                    코어 수보다 많이 돌려도 빨라지지 않고 힙만 더 쓴다.
+#   wait-ms        — 자리가 날 때까지 기다리는 최대 시간. 넘으면 503 으로 알린다.
+pdf:
+  extraction:
+    max-concurrent: 0
+    wait-ms: 10000
